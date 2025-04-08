@@ -61,14 +61,13 @@ def handle_uplink():
                         <th>Timestamp</th>
                         <th>Device Name</th>
                         <th>Application ID</th>
-                        <th>Payload</th>
+                        <th>Donnée (data)</th>
                     </tr>
                     {% for entry in data %}
                     <tr>
                         <td>{{ entry.timestamp }}</td>
                         <td>{{ entry.deviceInfo.deviceName }}</td>
-                        <td>{{ entry.deviceInfo.applicationId }}</td>
-                        <td><pre>{{ entry | tojson(indent=2) }}</pre></td>
+                        <td><pre>{{ entry.data }}</pre></td>
                     </tr>
                     {% endfor %}
                 </table>
