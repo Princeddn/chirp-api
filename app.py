@@ -1,30 +1,51 @@
 from flask import Flask, request, jsonify, render_template_string
 from datetime import datetime
-import json
-import os
-from Decoder import BaseDecoder, NexelecDecoder, WattecoDecoder  # 👈 Import de tes décodeurs
+import sqlite3, json
+from Decoder import BaseDecoder, NexelecDecoder, WattecoDecoder
 
 app = Flask(__name__)
-DB_FILE = "database.json"
 
-# Initialiser les décodeurs
+# Décodeurs
 convertion = BaseDecoder()
 decoder_nexelec = NexelecDecoder()
 decoder_watteco = WattecoDecoder()
 
-def load_data():
-    if os.path.exists(DB_FILE):
-        with open(DB_FILE, "r") as f:
-            return json.load(f)
-    else:
-        return []
+DB_FILE = "chirp_data.db"
 
-def save_data(new_entry):
-    data = load_data()
-    data.append(new_entry)
-    with open(DB_FILE, "w") as f:
-        json.dump(data, f, indent=2)
+# === INITIALISATION DB ===
+def init_db():
+    with sqlite3.connect(DB_FILE) as conn:
+        c = conn.cursor()
+        c.execute("""
+            CREATE TABLE IF NOT EXISTS uplinks (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                timestamp TEXT,
+                device_name TEXT,
+                data_base64 TEXT,
+                decoded_json TEXT
+            )
+        """)
+        conn.commit()
 
+# === ENREGISTRER UNE NOUVELLE DONNÉE ===
+def save_to_db(timestamp, device_name, data_b64, decoded_obj):
+    with sqlite3.connect(DB_FILE) as conn:
+        c = conn.cursor()
+        c.execute("""
+            INSERT INTO uplinks (timestamp, device_name, data_base64, decoded_json)
+            VALUES (?, ?, ?, ?)
+        """, (timestamp, device_name, data_b64, json.dumps(decoded_obj)))
+        conn.commit()
+
+# === CHARGER LES DONNÉES POUR AFFICHAGE ===
+def get_all_data():
+    with sqlite3.connect(DB_FILE) as conn:
+        conn.row_factory = sqlite3.Row
+        c = conn.cursor()
+        c.execute("SELECT * FROM uplinks ORDER BY id DESC")
+        return c.fetchall()
+
+# === DÉCODAGE AUTOMATIQUE ===
 def decode_lorawan_data(encoded_data):
     try:
         decoded_bytes = convertion.identify_and_process_data(encoded_data)
@@ -40,69 +61,67 @@ def decode_lorawan_data(encoded_data):
             if product_type_2octets in [0x110A, 0x310A]:
                 return decoder_watteco.decode_presso(decoded_hex)
             else:
-                return {"error": f"Type inconnu: 0x{product_type_2octets:04X}"}
+                return {"error": f"Type inconnu : 0x{product_type_2octets:04X}"}
     except Exception as e:
         return {"error": str(e)}
 
+# === ROUTE PRINCIPALE ===
 @app.route('/uplink', methods=['GET', 'POST'])
 def handle_uplink():
     if request.method == 'POST':
         event = request.args.get("event", "up")
         if event != "up":
-            print(f"📭 Event ignoré : {event}")
             return jsonify({"status": f"ignored event: {event}"}), 200
 
         data = request.json
-        data['timestamp'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        device_name = data.get("deviceInfo", {}).get("deviceName", "Inconnu")
+        data_b64 = data.get("data", "vide")
+        decoded = decode_lorawan_data(data_b64)
 
-        # ⬇️ Ajout du décodage de la trame LoRaWAN
-        if 'data' in data:
-            decoded = decode_lorawan_data(data['data'])
-            data['decoded'] = decoded
-
-        save_data(data)
-        print("📡 Donnée reçue + décodée :", data)
+        save_to_db(timestamp, device_name, data_b64, decoded)
         return jsonify({"status": "ok"}), 200
 
     elif request.method == 'GET':
-        data = load_data()
-
-        if not data:
-            return "<h2 style='font-family:Arial;'>Aucune donnée reçue pour le moment.</h2>"
+        rows = get_all_data()
+        if not rows:
+            return "<h2 style='font-family:Arial;'>Aucune donnée en base.</h2>"
 
         html = """
         <!DOCTYPE html>
         <html>
         <head>
-            <title>Dashboard - Données Décodées</title>
+            <title>Dashboard SQLite</title>
             <style>
-                body { font-family: Arial, sans-serif; margin: 40px; }
+                body { font-family: Arial; margin: 40px; }
                 table { border-collapse: collapse; width: 100%; }
                 th, td { border: 1px solid #ccc; padding: 8px; vertical-align: top; }
                 th { background-color: #f2f2f2; }
-                pre { margin: 0; white-space: pre-wrap; }
+                pre { white-space: pre-wrap; }
             </style>
         </head>
         <body>
-            <h2>📊 Données décodées de ChirpStack</h2>
-            <p>Total : {{ data|length }} trame(s)</p>
+            <h2>📊 Données stockées (SQLite)</h2>
             <table>
                 <tr>
-                    <th>Timestamp</th>
-                    <th>Device Name</th>
-                    <th>Trame Base64</th>
-                    <th>Décodé</th>
+                    <th>Horodatage</th>
+                    <th>Capteur</th>
+                    <th>Donnée (base64)</th>
+                    <th>Données décodées</th>
                 </tr>
-                {% for entry in data %}
+                {% for row in rows %}
                 <tr>
-                    <td>{{ entry.timestamp }}</td>
-                    <td>{{ entry.deviceInfo.deviceName }}</td>
-                    <td><pre>{{ entry.data }}</pre></td>
-                    <td><pre>{{ entry.decoded | tojson(indent=2) }}</pre></td>
+                    <td>{{ row['timestamp'] }}</td>
+                    <td>{{ row['device_name'] }}</td>
+                    <td><pre>{{ row['data_base64'] }}</pre></td>
+                    <td><pre>{{ row['decoded_json'] }}</pre></td>
                 </tr>
                 {% endfor %}
             </table>
         </body>
         </html>
         """
-        return render_template_string(html, data=data)
+        return render_template_string(html, rows=rows)
+
+# Appel unique au démarrage
+init_db()
