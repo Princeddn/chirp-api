@@ -1,13 +1,12 @@
-from flask import Flask, request, jsonify, render_template_string
+from flask import Flask, request, jsonify, render_template_string, send_file
 from datetime import datetime
-import json
-import os
-from Decoder import BaseDecoder, NexelecDecoder, WattecoDecoder  # 👈 Import de tes décodeurs
+import json, os, csv
+from Decoder import BaseDecoder, NexelecDecoder, WattecoDecoder
 
 app = Flask(__name__)
 DB_FILE = "database.json"
 
-# Initialiser les décodeurs
+# Initialisation des décodeurs
 convertion = BaseDecoder()
 decoder_nexelec = NexelecDecoder()
 decoder_watteco = WattecoDecoder()
@@ -16,8 +15,7 @@ def load_data():
     if os.path.exists(DB_FILE):
         with open(DB_FILE, "r") as f:
             return json.load(f)
-    else:
-        return []
+    return []
 
 def save_data(new_entry):
     data = load_data()
@@ -40,7 +38,7 @@ def decode_lorawan_data(encoded_data):
             if product_type_2octets in [0x110A, 0x310A]:
                 return decoder_watteco.decode_presso(decoded_hex)
             else:
-                return {"error": f"Type inconnu: 0x{product_type_2octets:04X}"}
+                return {"error": f"Type inconnu : 0x{product_type_2octets:04X}"}
     except Exception as e:
         return {"error": str(e)}
 
@@ -49,60 +47,80 @@ def handle_uplink():
     if request.method == 'POST':
         event = request.args.get("event", "up")
         if event != "up":
-            print(f"📭 Event ignoré : {event}")
             return jsonify({"status": f"ignored event: {event}"}), 200
 
         data = request.json
-        data['timestamp'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        device_name = data.get("deviceInfo", {}).get("deviceName", "Inconnu")
+        data_b64 = data.get("data", "vide")
+        decoded = decode_lorawan_data(data_b64)
 
-        # ⬇️ Ajout du décodage de la trame LoRaWAN
-        if 'data' in data:
-            decoded = decode_lorawan_data(data['data'])
-            data['decoded'] = decoded
+        entry = {
+            "timestamp": timestamp,
+            "device": device_name,
+            "data": data_b64,
+            "decoded": decoded
+        }
 
-        save_data(data)
-        print("📡 Donnée reçue + décodée :", data)
+        save_data(entry)
         return jsonify({"status": "ok"}), 200
 
-    elif request.method == 'GET':
-        data = load_data()
+    # Méthode GET
+    format_type = request.args.get("format", "html")
+    rows = load_data()
 
-        if not data:
-            return "<h2 style='font-family:Arial;'>Aucune donnée reçue pour le moment.</h2>"
+    if format_type == "json":
+        return jsonify(rows)
 
+    elif format_type == "csv":
+        csv_file = "export.csv"
+        with open(csv_file, "w", newline='') as csvfile:
+            fieldnames = ["timestamp", "device", "data", "decoded"]
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+            writer.writeheader()
+            for row in rows:
+                writer.writerow({
+                    "timestamp": row["timestamp"],
+                    "device": row["device"],
+                    "data": row["data"],
+                    "decoded": json.dumps(row["decoded"])
+                })
+        return send_file(csv_file, as_attachment=True)
+
+    else:
         html = """
         <!DOCTYPE html>
         <html>
         <head>
-            <title>Dashboard - Données Décodées</title>
+            <title>Données LoRa</title>
             <style>
-                body { font-family: Arial, sans-serif; margin: 40px; }
+                body { font-family: Arial; margin: 40px; }
                 table { border-collapse: collapse; width: 100%; }
                 th, td { border: 1px solid #ccc; padding: 8px; vertical-align: top; }
                 th { background-color: #f2f2f2; }
-                pre { margin: 0; white-space: pre-wrap; }
+                pre { white-space: pre-wrap; }
             </style>
         </head>
         <body>
-            <h2>📊 Données décodées de ChirpStack</h2>
-            <p>Total : {{ data|length }} trame(s)</p>
+            <h2>📡 Données reçues de ChirpStack</h2>
+            <p>Total : {{ rows|length }} trame(s)</p>
             <table>
                 <tr>
-                    <th>Timestamp</th>
-                    <th>Device Name</th>
-                    <th>Trame Base64</th>
+                    <th>Horodatage</th>
+                    <th>Capteur</th>
+                    <th>Trame</th>
                     <th>Décodé</th>
                 </tr>
-                {% for entry in data %}
+                {% for row in rows %}
                 <tr>
-                    <td>{{ entry.timestamp }}</td>
-                    <td>{{ entry.deviceInfo.deviceName }}</td>
-                    <td><pre>{{ entry.data }}</pre></td>
-                    <td><pre>{{ entry.decoded | tojson(indent=2) }}</pre></td>
+                    <td>{{ row.timestamp }}</td>
+                    <td>{{ row.device }}</td>
+                    <td><pre>{{ row.data }}</pre></td>
+                    <td><pre>{{ row.decoded | tojson(indent=2) }}</pre></td>
                 </tr>
                 {% endfor %}
             </table>
         </body>
         </html>
         """
-        return render_template_string(html, data=data)
+        return render_template_string(html, rows=rows)
