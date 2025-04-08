@@ -6,7 +6,6 @@ from Decoder import BaseDecoder, NexelecDecoder, WattecoDecoder
 app = Flask(__name__)
 DB_FILE = "database.json"
 
-# Initialisation des décodeurs
 convertion = BaseDecoder()
 decoder_nexelec = NexelecDecoder()
 decoder_watteco = WattecoDecoder()
@@ -65,7 +64,6 @@ def handle_uplink():
         save_data(entry)
         return jsonify({"status": "ok"}), 200
 
-    # Méthode GET
     format_type = request.args.get("format", "html")
     rows = load_data()
 
@@ -95,6 +93,8 @@ def handle_uplink():
             <title>Données LoRa</title>
             <style>
                 body { font-family: Arial; margin: 40px; }
+                .btns { margin-bottom: 20px; }
+                .btns button { padding: 8px 16px; margin-right: 10px; }
                 table { border-collapse: collapse; width: 100%; }
                 th, td { border: 1px solid #ccc; padding: 8px; vertical-align: top; }
                 th { background-color: #f2f2f2; }
@@ -103,13 +103,17 @@ def handle_uplink():
         </head>
         <body>
             <h2>📡 Données reçues de ChirpStack</h2>
+            <div class="btns">
+                <button onclick="window.location.href='/uplink?format=json'">📄 Voir en JSON</button>
+                <button onclick="window.location.href='/uplink?format=csv'">⬇️ Télécharger CSV</button>
+            </div>
             <p>Total : {{ rows|length }} trame(s)</p>
             <table>
                 <tr>
                     <th>Horodatage</th>
                     <th>Capteur</th>
                     <th>Trame</th>
-                    <th>Décodé</th>
+                    <th>Données décodées</th>
                 </tr>
                 {% for row in rows %}
                 <tr>
