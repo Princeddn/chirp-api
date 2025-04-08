@@ -1,18 +1,26 @@
 from flask import Flask, request, jsonify, render_template_string
 from datetime import datetime
-import sqlite3, json
+import sqlite3, json, os, base64, requests
+from dotenv import load_dotenv
 from Decoder import BaseDecoder, NexelecDecoder, WattecoDecoder
 
+# Charger les variables d'environnement
+load_dotenv(".env")
+
+# Variables GitHub
+GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
+GITHUB_REPO = os.getenv("GITHUB_REPO")
+GITHUB_BRANCH = os.getenv("GITHUB_BRANCH", "main")
+GITHUB_FILE_PATH = "chirp_data.db"
+
 app = Flask(__name__)
+DB_FILE = "chirp_data.db"
 
 # Décodeurs
 convertion = BaseDecoder()
 decoder_nexelec = NexelecDecoder()
 decoder_watteco = WattecoDecoder()
 
-DB_FILE = "chirp_data.db"
-
-# === INITIALISATION DB ===
 def init_db():
     with sqlite3.connect(DB_FILE) as conn:
         c = conn.cursor()
@@ -27,7 +35,6 @@ def init_db():
         """)
         conn.commit()
 
-# === ENREGISTRER UNE NOUVELLE DONNÉE ===
 def save_to_db(timestamp, device_name, data_b64, decoded_obj):
     with sqlite3.connect(DB_FILE) as conn:
         c = conn.cursor()
@@ -37,7 +44,6 @@ def save_to_db(timestamp, device_name, data_b64, decoded_obj):
         """, (timestamp, device_name, data_b64, json.dumps(decoded_obj)))
         conn.commit()
 
-# === CHARGER LES DONNÉES POUR AFFICHAGE ===
 def get_all_data():
     with sqlite3.connect(DB_FILE) as conn:
         conn.row_factory = sqlite3.Row
@@ -45,7 +51,6 @@ def get_all_data():
         c.execute("SELECT * FROM uplinks ORDER BY id DESC")
         return c.fetchall()
 
-# === DÉCODAGE AUTOMATIQUE ===
 def decode_lorawan_data(encoded_data):
     try:
         decoded_bytes = convertion.identify_and_process_data(encoded_data)
@@ -65,7 +70,35 @@ def decode_lorawan_data(encoded_data):
     except Exception as e:
         return {"error": str(e)}
 
-# === ROUTE PRINCIPALE ===
+def push_db_to_github():
+    try:
+        with open(DB_FILE, "rb") as f:
+            content = base64.b64encode(f.read()).decode('utf-8')
+
+        get_url = f"https://api.github.com/repos/{GITHUB_REPO}/contents/{GITHUB_FILE_PATH}"
+        headers = {"Authorization": f"Bearer {GITHUB_TOKEN}"}
+        sha = None
+
+        res = requests.get(get_url, headers=headers)
+        if res.status_code == 200:
+            sha = res.json()["sha"]
+
+        data = {
+            "message": "Mise à jour automatique de la base SQLite",
+            "content": content,
+            "branch": GITHUB_BRANCH,
+        }
+        if sha:
+            data["sha"] = sha
+
+        res = requests.put(get_url, headers=headers, json=data)
+        if res.status_code in [200, 201]:
+            print("✅ Base mise à jour sur GitHub !")
+        else:
+            print("❌ Échec push GitHub :", res.json())
+    except Exception as e:
+        print("❌ Erreur push GitHub :", str(e))
+
 @app.route('/uplink', methods=['GET', 'POST'])
 def handle_uplink():
     if request.method == 'POST':
@@ -80,6 +113,7 @@ def handle_uplink():
         decoded = decode_lorawan_data(data_b64)
 
         save_to_db(timestamp, device_name, data_b64, decoded)
+        push_db_to_github()
         return jsonify({"status": "ok"}), 200
 
     elif request.method == 'GET':
@@ -123,5 +157,5 @@ def handle_uplink():
         """
         return render_template_string(html, rows=rows)
 
-# Appel unique au démarrage
+# Initialisation de la base
 init_db()

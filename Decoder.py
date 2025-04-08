@@ -21,13 +21,13 @@ class BaseDecoder():
         et la convertit en tableau d'octets.
         """
         if isinstance(input_data, str) and re.fullmatch(r"[A-Za-z0-9+/=]+", input_data):
-            print("Reconnaissance : Base64 encodé.")
+            print("Data en Base64 encodé.")
             return self.decode_base64(input_data)
         elif isinstance(input_data, str) and re.fullmatch(r"[0-9a-fA-F]+", input_data):
-            print("Reconnaissance : Hexadécimal brut.")
+            print("Data en Hexadécimal brut.")
             return self.decode_hex(input_data)
         elif isinstance(input_data, bytes) or isinstance(input_data, list):
-            print("Reconnaissance : Tableau d'octets brut.")
+            print("Data en Tableau d'octets brut.")
             return bytes(input_data)
         else:
             raise ValueError("Format de donnée non reconnu ou invalide.")
