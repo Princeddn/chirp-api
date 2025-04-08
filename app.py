@@ -60,7 +60,6 @@ def handle_uplink():
                     <tr>
                         <th>Timestamp</th>
                         <th>Device Name</th>
-                        <th>Application ID</th>
                         <th>Donnée (data)</th>
                     </tr>
                     {% for entry in data %}
