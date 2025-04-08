@@ -27,12 +27,19 @@ def handle_uplink():
     elif request.method == 'GET':
 
 
-        if not received_data:
-            return  "<h2>Aucune donnée reçue pour le moment. <h2>"
-
-        # HTML ou JSON ?
         accept = request.headers.get('Accept', '')
-        if 'text/html' in accept:
+
+        # Cas où aucune donnée n'est encore reçue
+        if not received_data:
+            if 'application/json' in accept:
+                return jsonify([]), 200
+            else:
+                return "<h2 style='font-family:Arial;'>Aucune donnée reçue pour le moment.</h2>"
+
+        # HTML par défaut, JSON seulement si explicitement demandé
+        if 'application/json' in accept:
+            return jsonify(received_data), 200
+        else:
             html = """
             <!DOCTYPE html>
             <html>
@@ -59,9 +66,9 @@ def handle_uplink():
                     {% for entry in data %}
                     <tr>
                         <td>{{ entry.timestamp }}</td>
-                        <td>{{ entry.deviceName }}</td>
-                        <td>{{ entry.applicationID }}</td>
-                        <td><pre>{{ entry.object | tojson(indent=2) }}</pre></td>
+                        <td>{{ entry.deviceInfo.deviceName }}</td>
+                        <td>{{ entry.deviceInfo.applicationId }}</td>
+                        <td><pre>{{ entry | tojson(indent=2) }}</pre></td>
                     </tr>
                     {% endfor %}
                 </table>
@@ -69,5 +76,3 @@ def handle_uplink():
             </html>
             """
             return render_template_string(html, data=received_data)
-        else:
-            return jsonify(received_data), 200
