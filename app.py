@@ -95,11 +95,23 @@ def handle_uplink():
                 body { font-family: Arial; margin: 40px; }
                 .btns { margin-bottom: 20px; }
                 .btns button { padding: 8px 16px; margin-right: 10px; }
+                .search-bar { margin-bottom: 20px; }
+                input[type="text"] { padding: 8px; width: 250px; }
                 table { border-collapse: collapse; width: 100%; }
                 th, td { border: 1px solid #ccc; padding: 8px; vertical-align: top; }
                 th { background-color: #f2f2f2; }
                 pre { white-space: pre-wrap; }
             </style>
+            <script>
+                function filterTable() {
+                    const search = document.getElementById("searchInput").value.toLowerCase();
+                    const rows = document.querySelectorAll("tbody tr");
+                    rows.forEach(row => {
+                        const text = row.textContent.toLowerCase();
+                        row.style.display = text.includes(search) ? "" : "none";
+                    });
+                }
+            </script>
         </head>
         <body>
             <h2>📡 Données reçues de ChirpStack</h2>
@@ -107,14 +119,20 @@ def handle_uplink():
                 <button onclick="window.location.href='/uplink?format=json'">📄 Voir en JSON</button>
                 <button onclick="window.location.href='/uplink?format=csv'">⬇️ Télécharger CSV</button>
             </div>
+            <div class="search-bar">
+                🔍 Rechercher : <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="Capteur, données...">
+            </div>
             <p>Total : {{ rows|length }} trame(s)</p>
             <table>
+                <thead>
                 <tr>
                     <th>Horodatage</th>
                     <th>Capteur</th>
                     <th>Trame</th>
                     <th>Données décodées</th>
                 </tr>
+                </thead>
+                <tbody>
                 {% for row in rows %}
                 <tr>
                     <td>{{ row.timestamp }}</td>
@@ -123,6 +141,7 @@ def handle_uplink():
                     <td><pre>{{ row.decoded | tojson(indent=2) }}</pre></td>
                 </tr>
                 {% endfor %}
+                </tbody>
             </table>
         </body>
         </html>
