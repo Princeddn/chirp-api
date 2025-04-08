@@ -6,8 +6,8 @@ app = Flask(__name__)
 # Liste pour stocker les trames
 received_data = []
 
-@app.route('/data', methods=['GET', 'POST'])
-def handle_data():
+@app.route('/uplink', methods=['GET', 'POST'])
+def handle_uplink():
     if request.method == 'POST':
         event = request.args.get("event", "up")
 
