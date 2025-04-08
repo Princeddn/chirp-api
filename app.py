@@ -25,6 +25,11 @@ def handle_uplink():
         return jsonify({"status": "ok"}), 200
 
     elif request.method == 'GET':
+
+
+        if not received_data:
+            return  "<h2>Aucune donnée reçue pour le moment. <h2>"
+
         # HTML ou JSON ?
         accept = request.headers.get('Accept', '')
         if 'text/html' in accept:
