@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify, render_template_string, send_file
 from datetime import datetime
 import json, os, csv, uuid
 import subprocess
+from github_blackup_push import push_to_github
 
 from Decoder import BaseDecoder, NexelecDecoder, WattecoDecoder
 
@@ -72,7 +73,8 @@ def uplink():
         data["decoded"] = decoded
         data["id"] = str(uuid.uuid4())
         print("📡 Donnée reçue + décodée :", data)
-        save_data(data)
+        save_data(data)       # Enregistrer localement
+        push_to_github()      # Pousser sur GitHub automatiquement
         return jsonify({"status": "ok"}), 200
 
     # GET method: JSON / CSV / HTML
