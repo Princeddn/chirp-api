@@ -11,7 +11,8 @@ def push_to_github():
     try:
         subprocess.run(["git", "config", "--global", "user.email", email], check=True)
         subprocess.run(["git", "config", "--global", "user.name", user], check=True)
-        subprocess.run(["git", "checkout", "-B", "data-backup"], check=True)
+        subprocess.run(["git", "fetch", "origin", "data-backup"], check=True)
+        subprocess.run(["git", "checkout", "origin/data-backup", "--", DB_FILE], check=True)
         subprocess.run(["git", "add", "database.json"], check=True)
         subprocess.run(["git", "commit", "-m", f"Backup auto {datetime.now()}"], check=True)
         subprocess.run(["git", "push", repo_url, "data-backup", "--force"], check=True)
