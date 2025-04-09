@@ -58,13 +58,12 @@ def uplink():
         save_data(data)
         return jsonify({"status": "ok"}), 200
 
-    # Méthode GET
     rows = load_data()
     html = """
     <!DOCTYPE html>
     <html>
     <head>
-        <title>Dashboard Capteurs LoRa</title>
+        <title>Dashboard LoRa - Rafraîchissement manuel</title>
         <style>
             body { font-family: Arial; margin: 40px; }
             .btns button { padding: 8px 16px; margin-right: 10px; }
@@ -75,6 +74,8 @@ def uplink():
         </style>
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <script>
+            let chart;
+
             async function updateChart() {
                 const capteur = document.getElementById("capteur").value;
                 const grandeur = document.getElementById("grandeur").value;
@@ -89,7 +90,6 @@ def uplink():
                 chart.update();
             }
 
-            let chart;
             window.onload = function() {
                 const ctx = document.getElementById('chart').getContext('2d');
                 chart = new Chart(ctx, {
@@ -111,30 +111,29 @@ def uplink():
                         }
                     }
                 });
-                updateChart();
-                setInterval(updateChart, 10000);
             }
         </script>
     </head>
     <body>
-        <h2>📡 Dashboard Données Capteurs LoRa</h2>
+        <h2>📡 Dashboard Données LoRa</h2>
         <div class="btns">
             <button onclick="window.location.href='/uplink?format=json'">📄 JSON</button>
             <button onclick="window.location.href='/uplink?format=csv'">⬇️ Export CSV</button>
         </div>
         <div class="filter">
             🔧 Capteur :
-            <select id="capteur" onchange="updateChart()">
+            <select id="capteur">
                 {% for c in capteurs %}
                     <option value="{{c}}">{{c}}</option>
                 {% endfor %}
             </select>
             🌡️ Grandeur :
-            <select id="grandeur" onchange="updateChart()">
+            <select id="grandeur">
                 {% for g in grandeurs %}
                     <option value="{{g}}">{{g}}</option>
                 {% endfor %}
             </select>
+            <button onclick="updateChart()">🔄 Actualiser le graphe</button>
         </div>
         <canvas id="chart" width="600" height="200"></canvas>
         <h3>Données brutes</h3>
