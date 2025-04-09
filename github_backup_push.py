@@ -1,7 +1,7 @@
 import os
 import subprocess
 from datetime import datetime
-
+DB_FILE = "database.json"
 def push_to_github():
     token = os.getenv("GITHUB_PAT")
     user = os.getenv("GIT_USER")
