@@ -66,6 +66,7 @@ def uplink():
         data["id"] = str(uuid.uuid4())
         print("📡 Donnée reçue + décodée :", data)
         save_data(data)
+        push_to_github()
         return jsonify({"status": "ok"}), 200
 
     rows = load_data()
