@@ -12,6 +12,19 @@ convertion = BaseDecoder()
 decoder_nexelec = NexelecDecoder()
 decoder_watteco = WattecoDecoder()
 
+def sync_from_github():
+    try:
+        print("🔁 Synchronisation depuis GitHub...")
+        r = requests.get(GITHUB_RAW_URL)
+        r.raise_for_status()
+        data = r.json()
+        with open(LOCAL_DB, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2)
+        print("✅ Données synchronisées depuis GitHub.")
+    except Exception as e:
+        print(f"❌ Erreur de synchronisation depuis GitHub : {e}")
+
+
 def load_data():
     try:
         if os.path.exists(DB_FILE):
@@ -213,6 +226,10 @@ def detail_trame(id):
     if not entry:
         return "Trame non trouvée", 404
     return f"<h2>Détail trame {id}</h2><pre>{json.dumps(entry, indent=2)}</pre>"
+
+if not os.path.exists(LOCAL_DB) or os.path.getsize(LOCAL_DB) == 0:
+    sync_from_github()
+
 
 if __name__ == "__main__":
     app.run(debug=True)
