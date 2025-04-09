@@ -1,7 +1,10 @@
 from flask import Flask, request, jsonify, render_template_string, send_file
 from datetime import datetime
 import json, os, csv, uuid
+import subprocess
+
 from Decoder import BaseDecoder, NexelecDecoder, WattecoDecoder
+
 
 app = Flask(__name__)
 DB_FILE = "database.json"
@@ -9,6 +12,22 @@ DB_FILE = "database.json"
 convertion = BaseDecoder()
 decoder_nexelec = NexelecDecoder()
 decoder_watteco = WattecoDecoder()
+
+def push_to_github():
+    token = os.getenv("GITHUB_PAT")
+    user = os.getenv("GIT_USER")
+    email = os.getenv("GIT_EMAIL")
+    repo_url = f"https://{token}@github.com/{user}/chirp-api.git"
+    try:
+        subprocess.run(["git", "config", "--global", "user.email", email], check=True)
+        subprocess.run(["git", "config", "--global", "user.name", user], check=True)
+        subprocess.run(["git", "checkout", "-B", "data-backup"], check=True)
+        subprocess.run(["git", "add", "database.json"], check=True)
+        subprocess.run(["git", "commit", "-m", f"Backup auto {datetime.now()}"], check=True)
+        subprocess.run(["git", "push", repo_url, "data-backup", "--force"], check=True)
+        print("✅ Base de données poussée avec succès sur GitHub.")
+    except subprocess.CalledProcessError as e:
+        print("❌ Échec lors du push GitHub :", e)
 
 def load_data():
     if os.path.exists(DB_FILE):
