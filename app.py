@@ -14,20 +14,19 @@ convertion = BaseDecoder()
 decoder_nexelec = NexelecDecoder()
 decoder_watteco = WattecoDecoder()
 
-#  Restaurer database.json depuis GitHub si absent (au redémarrage)
-if not os.path.exists(DB_FILE):
-    try:
-        print("Tentative de restauration de database.json depuis GitHub...")
-        subprocess.run(["git", "checkout", "data-backup", "--", DB_FILE], check=True)
-        print("Base restaurée depuis la branche data-backup.")
-    except Exception as e:
-        print(f"❌ Impossible de restaurer database.json : {e}")
+
 
 def load_data():
-    if os.path.exists(DB_FILE):
-        with open(DB_FILE, "r") as f:
-            return json.load(f)
-    return []
+    try:
+        if os.path.exists(DB_FILE):
+            with open(DB_FILE, "r") as f:
+                content = f.read().strip()
+                if content:
+                    return json.loads(content)
+        return []
+    except Exception as e:
+        print(f"⚠️ Erreur lecture JSON : {e}")
+        return []
 
 def save_data(entry):
     data = load_data()
