@@ -7,7 +7,6 @@ from Decoder import BaseDecoder, NexelecDecoder, WattecoDecoder
 app = Flask(__name__)
 DB_FILE = "database.json"
 
-# Décodeurs
 convertion = BaseDecoder()
 decoder_nexelec = NexelecDecoder()
 decoder_watteco = WattecoDecoder()
@@ -63,7 +62,7 @@ def uplink():
     <!DOCTYPE html>
     <html>
     <head>
-        <title>Dashboard LoRa - Rafraîchissement manuel</title>
+        <title>Dashboard LoRa - Capteur et Grandeurs</title>
         <style>
             body { font-family: Arial; margin: 40px; }
             .btns button { padding: 8px 16px; margin-right: 10px; }
@@ -81,12 +80,21 @@ def uplink():
                 const grandeur = document.getElementById("grandeur").value;
                 const res = await fetch('/uplink?format=json');
                 const data = await res.json();
-                const filtered = data.filter(d => d.deviceInfo?.deviceName === capteur && d.decoded?.[grandeur]);
+                const filtered = data.filter(d =>
+                    (capteur === "all" || d.deviceInfo?.deviceName === capteur) &&
+                    d.decoded?.[grandeur]?.value !== undefined
+                );
+
+                if (filtered.length === 0) {
+                    alert("Aucune donnée pour cette combinaison.");
+                }
+
                 const labels = filtered.map(d => d.timestamp);
-                const valeurs = filtered.map(d => d.decoded[grandeur]?.value || 0);
+                const valeurs = filtered.map(d => d.decoded[grandeur].value);
+
                 chart.data.labels = labels;
+                chart.data.datasets[0].label = grandeur + " (" + (filtered[0]?.decoded[grandeur]?.unit || '') + ")";
                 chart.data.datasets[0].data = valeurs;
-                chart.options.scales.y.title.text = grandeur;
                 chart.update();
             }
 
@@ -100,14 +108,15 @@ def uplink():
                             label: 'Valeur',
                             data: [],
                             borderColor: 'blue',
-                            borderWidth: 2
+                            borderWidth: 2,
+                            fill: false
                         }]
                     },
                     options: {
                         responsive: true,
                         scales: {
-                            x: { title: { display: true, text: 'Temps' }},
-                            y: { title: { display: true, text: 'Valeur' }}
+                            x: { title: { display: true, text: 'Horodatage' }},
+                            y: { title: { display: true, text: 'Valeur mesurée' }}
                         }
                     }
                 });
@@ -115,14 +124,15 @@ def uplink():
         </script>
     </head>
     <body>
-        <h2>📡 Dashboard Données LoRa</h2>
+        <h2>📡 Dashboard Capteurs LoRa – Filtres Avancés</h2>
         <div class="btns">
             <button onclick="window.location.href='/uplink?format=json'">📄 JSON</button>
-            <button onclick="window.location.href='/uplink?format=csv'">⬇️ Export CSV</button>
+            <button onclick="window.location.href='/uplink?format=csv'">⬇️ CSV</button>
         </div>
         <div class="filter">
             🔧 Capteur :
             <select id="capteur">
+                <option value="all">Tous</option>
                 {% for c in capteurs %}
                     <option value="{{c}}">{{c}}</option>
                 {% endfor %}
@@ -133,10 +143,10 @@ def uplink():
                     <option value="{{g}}">{{g}}</option>
                 {% endfor %}
             </select>
-            <button onclick="updateChart()">🔄 Actualiser le graphe</button>
+            <button onclick="updateChart()">🔄 Afficher la courbe</button>
         </div>
         <canvas id="chart" width="600" height="200"></canvas>
-        <h3>Données brutes</h3>
+        <h3>📋 Données Reçues</h3>
         <table>
             <tr>
                 <th>Horodatage</th>
@@ -156,12 +166,12 @@ def uplink():
     </body>
     </html>
     """
-    capteurs = list({r.get("deviceInfo", {}).get("deviceName") for r in rows if r.get("deviceInfo")})
+    capteurs = sorted({r.get("deviceInfo", {}).get("deviceName") for r in rows if r.get("deviceInfo")})
     grandeurs = set()
     for r in rows:
-        d = r.get("decoded", {})
-        if isinstance(d, dict):
-            grandeurs.update(d.keys())
+        decoded = r.get("decoded", {})
+        if isinstance(decoded, dict):
+            grandeurs.update(decoded.keys())
     return render_template_string(html, rows=rows, capteurs=capteurs, grandeurs=sorted(grandeurs))
 
 @app.route('/trame/<id>')
