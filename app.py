@@ -1,7 +1,6 @@
-from flask import Flask, request, jsonify, render_template_string, send_file, redirect, url_for
+from flask import Flask, request, jsonify, render_template_string, send_file
 from datetime import datetime
 import json, os, csv, uuid
-
 from Decoder import BaseDecoder, NexelecDecoder, WattecoDecoder
 
 app = Flask(__name__)
@@ -57,7 +56,35 @@ def uplink():
         save_data(data)
         return jsonify({"status": "ok"}), 200
 
+    # GET method: JSON / CSV / HTML
     rows = load_data()
+    fmt = request.args.get("format")
+
+    if fmt == "json":
+        return jsonify(rows)
+
+    elif fmt == "csv":
+        csv_file = "export.csv"
+        with open(csv_file, "w", newline='') as f:
+            writer = csv.writer(f)
+            writer.writerow(["timestamp", "device", "data", "decoded"])
+            for row in rows:
+                writer.writerow([
+                    row.get("timestamp"),
+                    row.get("deviceInfo", {}).get("deviceName"),
+                    row.get("data"),
+                    json.dumps(row.get("decoded"))
+                ])
+        return send_file(csv_file, as_attachment=True)
+
+    # HTML dashboard
+    capteurs = sorted({r.get("deviceInfo", {}).get("deviceName") for r in rows if r.get("deviceInfo")})
+    grandeurs = set()
+    for r in rows:
+        decoded = r.get("decoded", {})
+        if isinstance(decoded, dict):
+            grandeurs.update(decoded.keys())
+
     html = """
     <!DOCTYPE html>
     <html>
@@ -77,16 +104,14 @@ def uplink():
             async function updateChart() {
                 const capteur = document.getElementById("capteur").value;
                 const grandeur = document.getElementById("grandeur").value;
-                const res = await fetch('/export?format=json');
+                const res = await fetch('/uplink?format=json');
                 const data = await res.json();
                 const filtered = data.filter(d =>
                     (capteur === "all" || d.deviceInfo?.deviceName === capteur) &&
                     d.decoded?.[grandeur]?.value !== undefined
                 );
-
                 const labels = filtered.map(d => d.timestamp);
                 const valeurs = filtered.map(d => d.decoded[grandeur].value);
-
                 chart.data.labels = labels;
                 chart.data.datasets[0].label = grandeur + " (" + (filtered[0]?.decoded[grandeur]?.unit || '') + ")";
                 chart.data.datasets[0].data = valeurs;
@@ -121,8 +146,8 @@ def uplink():
     <body>
         <h2>📡 Dashboard Capteurs LoRa</h2>
         <div class="btns">
-            <button onclick="window.location.href='/export?format=json'">📄 JSON</button>
-            <button onclick="window.location.href='/export?format=csv'">⬇️ Export CSV</button>
+            <button onclick="window.location.href='/uplink?format=json'">📄 JSON</button>
+            <button onclick="window.location.href='/uplink?format=csv'">⬇️ Export CSV</button>
         </div>
         <div class="filter">
             🔧 Capteur :
@@ -161,34 +186,7 @@ def uplink():
     </body>
     </html>
     """
-    capteurs = sorted({r.get("deviceInfo", {}).get("deviceName") for r in rows if r.get("deviceInfo")})
-    grandeurs = set()
-    for r in rows:
-        decoded = r.get("decoded", {})
-        if isinstance(decoded, dict):
-            grandeurs.update(decoded.keys())
     return render_template_string(html, rows=rows, capteurs=capteurs, grandeurs=sorted(grandeurs))
-
-@app.route('/export')
-def export():
-    rows = load_data()
-    fmt = request.args.get("format", "json")
-    if fmt == "json":
-        return jsonify(rows)
-    elif fmt == "csv":
-        csv_file = "export.csv"
-        with open(csv_file, "w", newline='') as f:
-            writer = csv.writer(f)
-            writer.writerow(["timestamp", "device", "data", "decoded"])
-            for row in rows:
-                writer.writerow([
-                    row.get("timestamp"),
-                    row.get("deviceInfo", {}).get("deviceName"),
-                    row.get("data"),
-                    json.dumps(row.get("decoded"))
-                ])
-        return send_file(csv_file, as_attachment=True)
-    return "Format non supporté", 400
 
 @app.route('/trame/<id>')
 def detail_trame(id):
