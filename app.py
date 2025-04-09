@@ -62,7 +62,7 @@ def uplink():
     <!DOCTYPE html>
     <html>
     <head>
-        <title>Dashboard LoRa - Capteur et Grandeurs</title>
+        <title>Dashboard LoRa</title>
         <style>
             body { font-family: Arial; margin: 40px; }
             .btns button { padding: 8px 16px; margin-right: 10px; }
@@ -74,20 +74,15 @@ def uplink():
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <script>
             let chart;
-
             async function updateChart() {
                 const capteur = document.getElementById("capteur").value;
                 const grandeur = document.getElementById("grandeur").value;
-                const res = await fetch('/uplink?format=json');
+                const res = await fetch('/export?format=json');
                 const data = await res.json();
                 const filtered = data.filter(d =>
                     (capteur === "all" || d.deviceInfo?.deviceName === capteur) &&
                     d.decoded?.[grandeur]?.value !== undefined
                 );
-
-                if (filtered.length === 0) {
-                    alert("Aucune donnée pour cette combinaison.");
-                }
 
                 const labels = filtered.map(d => d.timestamp);
                 const valeurs = filtered.map(d => d.decoded[grandeur].value);
@@ -124,10 +119,10 @@ def uplink():
         </script>
     </head>
     <body>
-        <h2>📡 Dashboard Capteurs LoRa – Filtres Avancés</h2>
+        <h2>📡 Dashboard Capteurs LoRa</h2>
         <div class="btns">
-            <button onclick="window.location.href='/uplink?format=json'">📄 JSON</button>
-            <button onclick="window.location.href='/uplink?format=csv'">⬇️ CSV</button>
+            <button onclick="window.location.href='/export?format=json'">📄 JSON</button>
+            <button onclick="window.location.href='/export?format=csv'">⬇️ Export CSV</button>
         </div>
         <div class="filter">
             🔧 Capteur :
@@ -174,18 +169,13 @@ def uplink():
             grandeurs.update(decoded.keys())
     return render_template_string(html, rows=rows, capteurs=capteurs, grandeurs=sorted(grandeurs))
 
-@app.route('/trame/<id>')
-def detail_trame(id):
+@app.route('/export')
+def export():
     rows = load_data()
-    entry = next((r for r in rows if r.get("id") == id), None)
-    if not entry:
-        return "Trame non trouvée", 404
-    return f"<h2>Détail trame {id}</h2><pre>{json.dumps(entry, indent=2)}</pre>"
-
-@app.route('/uplink', methods=['GET'])
-def export_data():
-    if request.args.get("format") == "csv":
-        rows = load_data()
+    fmt = request.args.get("format", "json")
+    if fmt == "json":
+        return jsonify(rows)
+    elif fmt == "csv":
         csv_file = "export.csv"
         with open(csv_file, "w", newline='') as f:
             writer = csv.writer(f)
@@ -198,4 +188,12 @@ def export_data():
                     json.dumps(row.get("decoded"))
                 ])
         return send_file(csv_file, as_attachment=True)
-    return redirect(url_for("uplink"))
+    return "Format non supporté", 400
+
+@app.route('/trame/<id>')
+def detail_trame(id):
+    rows = load_data()
+    entry = next((r for r in rows if r.get("id") == id), None)
+    if not entry:
+        return "Trame non trouvée", 404
+    return f"<h2>Détail trame {id}</h2><pre>{json.dumps(entry, indent=2)}</pre>"
