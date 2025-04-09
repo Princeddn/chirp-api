@@ -1,7 +1,6 @@
 from flask import Flask, request, jsonify, render_template_string, send_file
 from datetime import datetime
 import json, os, csv, uuid
-import subprocess
 from github_backup_push import push_to_github
 
 from Decoder import BaseDecoder, NexelecDecoder, WattecoDecoder
@@ -56,7 +55,7 @@ def uplink():
         event = request.args.get("event", "up")
         if event == "push":
             push_to_github()
-            return jsonify({"status": "Backup déclenché"}), 200
+            return jsonify({"status": "✅ Sauvegarde GitHub déclenchée"}), 200
 
         if event != "up":
             return jsonify({"status": f"ignored event: {event}"}), 200
@@ -107,6 +106,7 @@ def uplink():
             th, td { border: 1px solid #ccc; padding: 8px; vertical-align: top; }
             th { background-color: #f2f2f2; }
             .filter { margin: 20px 0; }
+            .msg { margin-top: 15px; font-weight: bold; color: green; }
         </style>
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <script>
@@ -126,6 +126,12 @@ def uplink():
                 chart.data.datasets[0].label = grandeur + " (" + (filtered[0]?.decoded[grandeur]?.unit || '') + ")";
                 chart.data.datasets[0].data = valeurs;
                 chart.update();
+            }
+
+            async function lancerBackup() {
+                const res = await fetch("/uplink?event=push", { method: "POST" });
+                const data = await res.json();
+                document.getElementById("msg").innerText = data.status;
             }
 
             window.onload = function() {
@@ -158,9 +164,8 @@ def uplink():
         <div class="btns">
             <button onclick="window.location.href='/uplink?format=json'">📄 JSON</button>
             <button onclick="window.location.href='/uplink?format=csv'">⬇️ Export CSV</button>
-            <form method='POST' action='/uplink?event=push' style='display:inline;'>
-                <button type='submit'>💾 Backup GitHub</button>
-            </form>
+            <button onclick="lancerBackup()">💾 Sauvegarde GitHub</button>
+            <span class="msg" id="msg"></span>
         </div>
         <div class="filter">
             🔧 Capteur :
