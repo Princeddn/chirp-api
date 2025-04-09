@@ -6,15 +6,12 @@ from github_backup_push import push_to_github
 
 from Decoder import BaseDecoder, NexelecDecoder, WattecoDecoder
 
-
 app = Flask(__name__)
 DB_FILE = "database.json"
 
 convertion = BaseDecoder()
 decoder_nexelec = NexelecDecoder()
 decoder_watteco = WattecoDecoder()
-
-
 
 def load_data():
     try:
@@ -57,6 +54,10 @@ def decode_lorawan_data(encoded_data):
 def uplink():
     if request.method == 'POST':
         event = request.args.get("event", "up")
+        if event == "push":
+            push_to_github()
+            return jsonify({"status": "Backup déclenché"}), 200
+
         if event != "up":
             return jsonify({"status": f"ignored event: {event}"}), 200
         data = request.json
@@ -65,11 +66,9 @@ def uplink():
         data["decoded"] = decoded
         data["id"] = str(uuid.uuid4())
         print("📡 Donnée reçue + décodée :", data)
-        save_data(data)       # Enregistrer localement
-        push_to_github()      # Pousser sur GitHub automatiquement
+        save_data(data)
         return jsonify({"status": "ok"}), 200
 
-    # GET method: JSON / CSV / HTML
     rows = load_data()
     fmt = request.args.get("format")
 
@@ -90,7 +89,6 @@ def uplink():
                 ])
         return send_file(csv_file, as_attachment=True)
 
-    # HTML dashboard
     capteurs = sorted({r.get("deviceInfo", {}).get("deviceName") for r in rows if r.get("deviceInfo")})
     grandeurs = set()
     for r in rows:
@@ -98,8 +96,7 @@ def uplink():
         if isinstance(decoded, dict):
             grandeurs.update(decoded.keys())
 
-    html = """
-    <!DOCTYPE html>
+    html = """<!DOCTYPE html>
     <html>
     <head>
         <title>Dashboard LoRa</title>
@@ -161,6 +158,9 @@ def uplink():
         <div class="btns">
             <button onclick="window.location.href='/uplink?format=json'">📄 JSON</button>
             <button onclick="window.location.href='/uplink?format=csv'">⬇️ Export CSV</button>
+            <form method='POST' action='/uplink?event=push' style='display:inline;'>
+                <button type='submit'>💾 Backup GitHub</button>
+            </form>
         </div>
         <div class="filter">
             🔧 Capteur :
@@ -197,8 +197,7 @@ def uplink():
             {% endfor %}
         </table>
     </body>
-    </html>
-    """
+    </html>"""
     return render_template_string(html, rows=rows, capteurs=capteurs, grandeurs=sorted(grandeurs))
 
 @app.route('/trame/<id>')
@@ -208,3 +207,6 @@ def detail_trame(id):
     if not entry:
         return "Trame non trouvée", 404
     return f"<h2>Détail trame {id}</h2><pre>{json.dumps(entry, indent=2)}</pre>"
+
+if __name__ == "__main__":
+    app.run(debug=True)
