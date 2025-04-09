@@ -14,21 +14,14 @@ convertion = BaseDecoder()
 decoder_nexelec = NexelecDecoder()
 decoder_watteco = WattecoDecoder()
 
-def push_to_github():
-    token = os.getenv("GITHUB_PAT")
-    user = os.getenv("GIT_USER")
-    email = os.getenv("GIT_EMAIL")
-    repo_url = f"https://{token}@github.com/{user}/chirp-api.git"
+#  Restaurer database.json depuis GitHub si absent (au redémarrage)
+if not os.path.exists(DB_FILE):
     try:
-        subprocess.run(["git", "config", "--global", "user.email", email], check=True)
-        subprocess.run(["git", "config", "--global", "user.name", user], check=True)
-        subprocess.run(["git", "checkout", "-B", "data-backup"], check=True)
-        subprocess.run(["git", "add", "database.json"], check=True)
-        subprocess.run(["git", "commit", "-m", f"Backup auto {datetime.now()}"], check=True)
-        subprocess.run(["git", "push", repo_url, "data-backup", "--force"], check=True)
-        print("✅ Base de données poussée avec succès sur GitHub.")
-    except subprocess.CalledProcessError as e:
-        print("❌ Échec lors du push GitHub :", e)
+        print("Tentative de restauration de database.json depuis GitHub...")
+        subprocess.run(["git", "checkout", "data-backup", "--", DB_FILE], check=True)
+        print("Base restaurée depuis la branche data-backup.")
+    except Exception as e:
+        print(f"❌ Impossible de restaurer database.json : {e}")
 
 def load_data():
     if os.path.exists(DB_FILE):
