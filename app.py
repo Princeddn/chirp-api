@@ -16,9 +16,9 @@ def load_data():
             return json.load(f)
     return []
 
-def save_data(new_entry):
+def save_data(full_data):
     data = load_data()
-    data.append(new_entry)
+    data.append(full_data)
     with open(DB_FILE, "w") as f:
         json.dump(data, f, indent=2)
 
@@ -41,109 +41,114 @@ def decode_lorawan_data(encoded_data):
     except Exception as e:
         return {"error": str(e)}
 
-@app.route('/uplink', methods=['GET', 'POST'])
+@app.route("/uplink", methods=["GET", "POST"])
 def handle_uplink():
-    if request.method == 'POST':
+    if request.method == "POST":
         event = request.args.get("event", "up")
         if event != "up":
             return jsonify({"status": f"ignored event: {event}"}), 200
 
         data = request.json
-        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        device_name = data.get("deviceInfo", {}).get("deviceName", "Inconnu")
-        data_b64 = data.get("data", "vide")
-        decoded = decode_lorawan_data(data_b64)
+        data["timestamp"] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        decoded = decode_lorawan_data(data.get("data", ""))
+        data["decoded"] = decoded
 
-        entry = {
-            "timestamp": timestamp,
-            "device": device_name,
-            "data": data_b64,
-            "decoded": decoded
-        }
-
-        save_data(entry)
+        print("\U0001F4E1 Donnée reçue + décodée :", data)
+        save_data(data)
         return jsonify({"status": "ok"}), 200
 
-    format_type = request.args.get("format", "html")
-    rows = load_data()
-
-    if format_type == "json":
-        return jsonify(rows)
-
-    elif format_type == "csv":
-        csv_file = "export.csv"
-        with open(csv_file, "w", newline='') as csvfile:
-            fieldnames = ["timestamp", "device", "data", "decoded"]
-            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-            writer.writeheader()
-            for row in rows:
-                writer.writerow({
-                    "timestamp": row["timestamp"],
-                    "device": row["device"],
-                    "data": row["data"],
-                    "decoded": json.dumps(row["decoded"])
-                })
-        return send_file(csv_file, as_attachment=True)
-
-    else:
+    elif request.method == "GET":
+        rows = load_data()
         html = """
         <!DOCTYPE html>
         <html>
         <head>
-            <title>Données LoRa</title>
+            <title>Dashboard LoRa + Données décodées</title>
             <style>
-                body { font-family: Arial; margin: 40px; }
-                .btns { margin-bottom: 20px; }
-                .btns button { padding: 8px 16px; margin-right: 10px; }
-                .search-bar { margin-bottom: 20px; }
-                input[type="text"] { padding: 8px; width: 250px; }
-                table { border-collapse: collapse; width: 100%; }
-                th, td { border: 1px solid #ccc; padding: 8px; vertical-align: top; }
-                th { background-color: #f2f2f2; }
-                pre { white-space: pre-wrap; }
+                body { font-family: Arial; margin: 20px; }
+                table { border-collapse: collapse; width: 100%; margin-top: 30px; }
+                th, td { border: 1px solid #ccc; padding: 6px; }
+                th { background-color: #f9f9f9; }
+                select, input { margin: 5px; padding: 5px; }
+                canvas { max-width: 100%; height: auto; }
             </style>
-            <script>
-                function filterTable() {
-                    const search = document.getElementById("searchInput").value.toLowerCase();
-                    const rows = document.querySelectorAll("tbody tr");
-                    rows.forEach(row => {
-                        const text = row.textContent.toLowerCase();
-                        row.style.display = text.includes(search) ? "" : "none";
-                    });
-                }
-            </script>
+            <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         </head>
         <body>
-            <h2>📡 Données reçues de ChirpStack</h2>
-            <div class="btns">
-                <button onclick="window.location.href='/uplink?format=json'">📄 Voir en JSON</button>
-                <button onclick="window.location.href='/uplink?format=csv'">⬇️ Télécharger CSV</button>
-            </div>
-            <div class="search-bar">
-                🔍 Rechercher : <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="Capteur, données...">
-            </div>
-            <p>Total : {{ rows|length }} trame(s)</p>
+            <h2>📡 Données Reçues et Décodées</h2>
+
+            <label for="grandeur">Choisir une grandeur :</label>
+            <select id="grandeur" onchange="updateChart()">
+                <option value="temperature">Température</option>
+                <option value="humidity">Humidité</option>
+                <option value="co2">CO2</option>
+                <option value="voc">VOC</option>
+                <option value="PM1">PM1</option>
+                <option value="PM2.5">PM2.5</option>
+                <option value="PM10">PM10</option>
+            </select>
+
+            <canvas id="graph" height="100"></canvas>
+
             <table>
-                <thead>
                 <tr>
                     <th>Horodatage</th>
                     <th>Capteur</th>
-                    <th>Trame</th>
-                    <th>Données décodées</th>
+                    <th>Data</th>
+                    <th>Décodage</th>
                 </tr>
-                </thead>
-                <tbody>
                 {% for row in rows %}
                 <tr>
                     <td>{{ row.timestamp }}</td>
-                    <td>{{ row.device }}</td>
+                    <td>{{ row.deviceInfo.deviceName }}</td>
                     <td><pre>{{ row.data }}</pre></td>
                     <td><pre>{{ row.decoded | tojson(indent=2) }}</pre></td>
                 </tr>
                 {% endfor %}
-                </tbody>
             </table>
+
+            <script>
+                var allData = {{ rows | tojson }};
+                var chart;
+
+                function updateChart() {
+                    let g = document.getElementById('grandeur').value;
+                    let labels = [];
+                    let values = [];
+
+                    allData.forEach(d => {
+                        let time = d.timestamp;
+                        let decoded = d.decoded;
+                        if (decoded && decoded[g] && decoded[g].value !== undefined) {
+                            labels.push(time);
+                            values.push(decoded[g].value);
+                        }
+                    });
+
+                    if (chart) chart.destroy();
+
+                    const ctx = document.getElementById('graph').getContext('2d');
+                    chart = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                label: g + ' en fonction du temps',
+                                data: values,
+                                fill: false,
+                                borderColor: 'blue',
+                                tension: 0.1
+                            }]
+                        }
+                    });
+                }
+
+                window.onload = updateChart;
+            </script>
         </body>
         </html>
         """
         return render_template_string(html, rows=rows)
+
+if __name__ == '__main__':
+    app.run(debug=True)
