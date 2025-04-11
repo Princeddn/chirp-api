@@ -114,46 +114,91 @@ def uplink():
         if isinstance(decoded, dict):
             grandeurs.update(decoded.keys())
 
-    html = """<!DOCTYPE html>
+    html = """
+    <!DOCTYPE html>
     <html>
     <head>
-        <title>Dashboard LoRa</title>
+        <title>Dashboard LoRa Optimisé</title>
+        <!-- Bootstrap CSS -->
+        <link rel="stylesheet"
+              href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css">
         <style>
-            body { font-family: Arial; margin: 40px; }
-            .btns button { padding: 8px 16px; margin-right: 10px; }
-            table { border-collapse: collapse; width: 100%; margin-top: 20px; }
-            th, td { border: 1px solid #ccc; padding: 8px; vertical-align: top; }
-            th { background-color: #f2f2f2; }
-            .filter { margin: 20px 0; }
-            .msg { margin-top: 15px; font-weight: bold; color: green; }
+          body { margin: 20px; }
+          pre { margin: 0; }
+          .alarm { background-color: #ffcccc !important; }
         </style>
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <script>
             let chart;
+            async function loadData() {
+                const res = await fetch('/uplink?format=json');
+                return await res.json();
+            }
+
+            // Rafraîchit le tableau toutes les X secondes
+            async function autoRefresh() {
+                await refreshTable();
+                setTimeout(autoRefresh, 10000); // toutes les 10s
+            }
+
+            async function refreshTable() {
+                const data = await loadData();
+                const tbody = document.getElementById('sensor-tbody');
+                tbody.innerHTML = '';
+
+                data.forEach(d => {
+                    const tr = document.createElement('tr');
+
+                    // Check alarme co2
+                    if (d.decoded?.co2?.value > 1000) {
+                       tr.classList.add('alarm');
+                    }
+
+                    const tdTime = document.createElement('td');
+                    tdTime.innerHTML = d.timestamp || '';
+                    tr.appendChild(tdTime);
+
+                    const tdDevice = document.createElement('td');
+                    tdDevice.innerHTML = d.deviceInfo?.deviceName || '';
+                    tr.appendChild(tdDevice);
+
+                    const tdData = document.createElement('td');
+                    tdData.innerHTML = '<pre>'+(d.data || '')+'</pre>';
+                    tr.appendChild(tdData);
+
+                    const tdDecoded = document.createElement('td');
+                    tdDecoded.innerHTML = '<pre>'+JSON.stringify(d.decoded, null, 2)+'</pre>';
+                    tr.appendChild(tdDecoded);
+
+                    tbody.appendChild(tr);
+                });
+            }
+
             async function updateChart() {
                 const capteur = document.getElementById("capteur").value;
                 const grandeur = document.getElementById("grandeur").value;
-                const res = await fetch('/uplink?format=json');
-                const data = await res.json();
+                const data = await loadData();
                 const filtered = data.filter(d =>
                     (capteur === "all" || d.deviceInfo?.deviceName === capteur) &&
                     d.decoded?.[grandeur]?.value !== undefined
                 );
                 const labels = filtered.map(d => d.timestamp);
-                const valeurs = filtered.map(d => d.decoded[grandeur].value);
+                const vals = filtered.map(d => d.decoded[grandeur].value);
+
                 chart.data.labels = labels;
-                chart.data.datasets[0].label = grandeur + " (" + (filtered[0]?.decoded[grandeur]?.unit || '') + ")";
-                chart.data.datasets[0].data = valeurs;
+                chart.data.datasets[0].label = grandeur;
+                chart.data.datasets[0].data = vals;
                 chart.update();
             }
 
             async function lancerBackup() {
                 const res = await fetch("/uplink?event=push", { method: "POST" });
-                const data = await res.json();
-                document.getElementById("msg").innerText = data.status;
+                const result = await res.json();
+                alert(result.status);
             }
 
-            window.onload = function() {
+            window.onload = async function() {
+                // Initial chart
                 const ctx = document.getElementById('chart').getContext('2d');
                 chart = new Chart(ctx, {
                     type: 'line',
@@ -168,60 +213,69 @@ def uplink():
                         }]
                     },
                     options: {
-                        responsive: true,
-                        scales: {
-                            x: { title: { display: true, text: 'Horodatage' }},
-                            y: { title: { display: true, text: 'Valeur mesurée' }}
-                        }
+                        responsive: true
                     }
                 });
+
+                // Premier refresh
+                await refreshTable();
+                // auto refresh
+                autoRefresh();
             }
         </script>
     </head>
-    <body>
-        <h2>📡 Dashboard Capteurs LoRa</h2>
-        <div class="btns">
-            <button onclick="window.location.href='/uplink?format=json'">📄 JSON</button>
-            <button onclick="window.location.href='/uplink?format=csv'">⬇️ Export CSV</button>
-            <button onclick="lancerBackup()">💾 Sauvegarde GitHub</button>
-            <span class="msg" id="msg"></span>
+    <body class="container">
+        <h1 class="mt-4 mb-4">📡 Dashboard Capteurs LoRa (Optimisé)</h1>
+        <div class="mb-3">
+            <button class="btn btn-outline-primary me-2" onclick="location.href='/uplink?format=json'">📄 JSON</button>
+            <button class="btn btn-outline-success me-2" onclick="location.href='/uplink?format=csv'">⬇️ Export CSV</button>
+            <button class="btn btn-outline-info" onclick="lancerBackup()">💾 Sauvegarde GitHub</button>
         </div>
-        <div class="filter">
-            🔧 Capteur :
-            <select id="capteur">
+
+        <div class="row mb-3">
+          <div class="col-md-4">
+            <label>🔧 Capteur:</label>
+            <select id="capteur" class="form-select">
                 <option value="all">Tous</option>
                 {% for c in capteurs %}
                     <option value="{{c}}">{{c}}</option>
                 {% endfor %}
             </select>
-            🌡️ Grandeur :
-            <select id="grandeur">
+          </div>
+          <div class="col-md-4">
+            <label>🌡️ Grandeur:</label>
+            <select id="grandeur" class="form-select">
                 {% for g in grandeurs %}
                     <option value="{{g}}">{{g}}</option>
                 {% endfor %}
             </select>
-            <button onclick="updateChart()">🔄 Afficher la courbe</button>
+          </div>
+          <div class="col-md-4 d-flex align-items-end">
+            <button class="btn btn-outline-primary" onclick="updateChart()">🔄 Courbe</button>
+          </div>
         </div>
-        <canvas id="chart" width="600" height="200"></canvas>
-        <h3>📋 Données Reçues</h3>
-        <table>
-            <tr>
-                <th>Horodatage</th>
-                <th>Capteur</th>
-                <th>Payload</th>
-                <th>Données décodées</th>
-            </tr>
-            {% for row in rows %}
-            <tr>
-                <td><a href="/trame/{{ row.id }}">{{ row.timestamp }}</a></td>
-                <td>{{ row.deviceInfo.deviceName }}</td>
-                <td><pre>{{ row.data }}</pre></td>
-                <td><pre>{{ row.decoded | tojson(indent=2) }}</pre></td>
-            </tr>
-            {% endfor %}
+
+        <canvas id="chart" style="max-width: 100%; height: 300px;"></canvas>
+
+        <h3 class="mt-4">📋 Données Reçues (auto-refresh)</h3>
+        <table class="table table-bordered">
+            <thead class="table-light">
+                <tr>
+                    <th>Horodatage</th>
+                    <th>Capteur</th>
+                    <th>Payload</th>
+                    <th>Données décodées</th>
+                </tr>
+            </thead>
+            <tbody id="sensor-tbody">
+            </tbody>
         </table>
+
+        <!-- Bootstrap JS -->
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
     </body>
-    </html>"""
+    </html>
+    """
     return render_template_string(html, rows=rows, capteurs=capteurs, grandeurs=sorted(grandeurs))
 
 @app.route('/trame/<id>')
