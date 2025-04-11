@@ -2,12 +2,12 @@ from flask import Flask, request, jsonify, render_template_string, send_file
 from datetime import datetime
 import json, os, csv, uuid
 from github_backup_push import push_to_github
-
+import requests
 from Decoder import BaseDecoder, NexelecDecoder, WattecoDecoder
 
 app = Flask(__name__)
 DB_FILE = "database.json"
-
+GITHUB_RAW_URL = "https://raw.githubusercontent.com/Princeddn/chirp-api/data-backup/database.json"
 convertion = BaseDecoder()
 decoder_nexelec = NexelecDecoder()
 decoder_watteco = WattecoDecoder()
@@ -18,7 +18,7 @@ def sync_from_github():
         r = requests.get(GITHUB_RAW_URL)
         r.raise_for_status()
         data = r.json()
-        with open(LOCAL_DB, "w", encoding="utf-8") as f:
+        with open(DB_FILE, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2)
         print("✅ Données synchronisées depuis GitHub.")
     except Exception as e:
@@ -227,7 +227,7 @@ def detail_trame(id):
         return "Trame non trouvée", 404
     return f"<h2>Détail trame {id}</h2><pre>{json.dumps(entry, indent=2)}</pre>"
 
-if not os.path.exists(LOCAL_DB) or os.path.getsize(LOCAL_DB) == 0:
+if not os.path.exists(DB_FILE) or os.path.getsize(DB_FILE) == 0:
     sync_from_github()
 
 

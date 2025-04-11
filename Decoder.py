@@ -256,52 +256,6 @@ class NexelecDecoder(BaseDecoder):
     def decode_noise(self, value):
         return {"value": value, "unit": "dB"} if value != 127 else "Error"
 
-    def decode_presso(self, string_hex):
-        """DÃ©code une trame du capteur Press'O de Watteco (0-10V ou 4-20mA)."""
-
-        if len(string_hex) < 11:
-            return {"error": "Trame trop courte"}
-
-        # Identifier le type de message et capteur
-        # Les 4 derniers octets = 8 caractères hexadécimaux
-        raw_value_hex = string_hex[-8:]  # e.g. "3ba15468"
-        raw_bytes = bytes.fromhex(raw_value_hex)  # conversion vers bytes
-        
-        # Extraire le float (format IEEE754 en little-endian) 
-        valeur_float = struct.unpack("<f", raw_bytes)[0]
-
-        # Les 2 premiers octets (ou 4) permettent de déterminer le type
-        # On conserve votre logique existante :
-        type_message = string_hex[:8]  # par exemple "110a000c"        # Déterminer le type de capteur et appliquer la conversion
-        if type_message.startswith("310a000c"):  # 0-10V
-            capteur_type = "Press'O (0-10V)"
-            valeur_V = round(valeur_float / 1000, 3)  # Conversion mV â†’ V
-            Tension = {"value":valeur_V, "unit":"V"}
-        elif type_message.startswith("110a000c"):  # 4-20mA
-            capteur_type = "Press'O (4-20mA)"
-            valeur_mA = valeur_float  # La valeur brute est en mA
-            valeur_V = round(((valeur_mA - 4) / 16) * 10, 3)  # Conversion en Volts
-            Tension = {"value":valeur_V, "unit":"V"}
-
-        else:
-            capteur_type = "Inconnu"
-            valeur_V = None
-
-        if capteur_type == "Press'O (0-10V)":
-            return {"fabricant": "NKE Watteco",
-            "Product_type": capteur_type,
-            "type_message": type_message,
-            "donnees": Tension}
-        elif capteur_type == "Press'O (4-20mA)":
-            return {"fabricant": "NKE Watteco",
-            "Product_type": capteur_type,
-            "type_message": type_message,
-            "donnees": Tension
-        
-            }
-        else:
-            return "Erreur par rapport au type de produit"
-
 class WattecoDecoder(BaseDecoder):
 
         
@@ -314,24 +268,29 @@ class WattecoDecoder(BaseDecoder):
             if header == "110a0402":  # Température
                 raw = int(payload_hex[-4:], 16)
                 value = raw / 100
-                data = {"capteur": "THR", "mesure": "Température", "valeur": value, "unité": "°C"}
+                Temperature = {"value": value, "unit": "°C"}
+                data = {"Product_type": "THR", "Temperature":Temperature}
 
             elif header == "110a0405":  # Humidité
                 raw = int(payload_hex[-4:], 16)
                 value = raw / 100
-                data = {"capteur": "THR", "mesure": "Humidité", "valeur": value, "unité": "%RH"}
+                Humidity = {"value": value, "unit": "%RH"}
+                data = {"capteur": "THR", "Humidity": Humidity}
 
             elif header == "110a040c":  # Luminosité (float)
                 value = struct.unpack(">f", bytes.fromhex(payload_hex[-8:]))[0]
-                data = {"capteur": "THR", "mesure": "Luminosité", "valeur": value, "unité": "% estimée"}
+                luminosity = {"value": value, "unit":"Lux"}
+                data = {"Product_type": "THR", "Luminosity":Luminosity}
 
             elif header == "110a000c":  # Press'O 4-20 mA
                 value = struct.unpack(">f", bytes.fromhex(payload_hex[-8:]))[0]
-                data = {"capteur": "Press'O", "entrée": "4-20mA", "valeur": value, "unité": "mA"}
+                Courant = {"value": value, "unit":"mA"}
+                data = {"Product_type": "Press'o 4-20mA", "Courant":Courant}
 
             elif header == "310a000c":  # Press'O 0-10V
                 value = struct.unpack(">f", bytes.fromhex(payload_hex[-8:]))[0]
-                data = {"capteur": "Press'O", "entrée": "0-10V", "valeur": value, "unité": "mV"}
+                Tension = {"value": value, "unit":"mV"}
+                data = {"Product_type": "Press'o 0-10V", "Tension": Tension}
 
             else:
                 data = {"erreur": f"Header inconnu : {header}"}
