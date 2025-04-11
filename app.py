@@ -12,37 +12,42 @@ convertion = BaseDecoder()
 decoder_nexelec = NexelecDecoder()
 decoder_watteco = WattecoDecoder()
 
-def sync_from_github():
+def load_data_local():
+    """Lit localement database.json."""
     try:
-        print("🔁 Synchronisation depuis GitHub...")
+        with open(DB_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception as e:
+        print(f"⚠️ Erreur lecture locale : {e}")
+        return []
+
+def load_data_github():
+    """Lit directement depuis GitHub pour l'affichage du dashboard."""
+    try:
+        print("📡 Lecture des données depuis GitHub RAW...")
         r = requests.get(GITHUB_RAW_URL)
         r.raise_for_status()
-        data = r.json()
+        return r.json()
+    except Exception as e:
+        print("❌ Erreur lecture GitHub pour affichage :", e)
+        return []
+
+def save_data(new_entries):
+    """Ajoute les nouvelles entrées en local, puis push GitHub."""
+    current = load_data_local()
+    existing_ids = {d.get("id") for d in current}
+    new_data = [d for d in new_entries if d.get("id") not in existing_ids]
+
+    if new_data:
+        current.extend(new_data)
         with open(DB_FILE, "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=2)
-        print("✅ Données synchronisées depuis GitHub.")
-    except Exception as e:
-        print(f"❌ Erreur de synchronisation depuis GitHub : {e}")
+            json.dump(current, f, indent=2, ensure_ascii=False)
+        print(f"✅ {len(new_data)} nouvelle(s) donnée(s) sauvegardée(s)")
 
-
-def load_data():
-    try:
-        if os.path.exists(DB_FILE):
-            with open(DB_FILE, "r") as f:
-                content = f.read().strip()
-                if content:
-                    return json.loads(content)
-        return []
-    except Exception as e:
-        print(f"⚠️ Erreur lecture JSON : {e}")
-        return []
-
-def save_data(entry):
-    data = load_data()
-    data.append(entry)
-    with open(DB_FILE, "w") as f:
-        json.dump(data, f, indent=2)
-
+        time.sleep(0.2)  # Petit délai avant push
+        push_to_github()
+    else:
+        print("ℹ️ Pas de nouvelles données à sauvegarder")
 def decode_lorawan_data(encoded_data):
     try:
         decoded_bytes = convertion.identify_and_process_data(encoded_data)
@@ -78,11 +83,11 @@ def uplink():
         data["decoded"] = decoded
         data["id"] = str(uuid.uuid4())
         print("📡 Donnée reçue + décodée :", data)
-        save_data(data)
+        save_data([data])
         push_to_github()
         return jsonify({"status": "ok"}), 200
 
-    rows = load_data()
+    rows = load_data_github()
     fmt = request.args.get("format")
 
     if fmt == "json":
@@ -221,15 +226,21 @@ def uplink():
 
 @app.route('/trame/<id>')
 def detail_trame(id):
-    rows = load_data()
+    rows = load_data_github()
     entry = next((r for r in rows if r.get("id") == id), None)
     if not entry:
         return "Trame non trouvée", 404
     return f"<h2>Détail trame {id}</h2><pre>{json.dumps(entry, indent=2)}</pre>"
 
+# Au démarrage, si le local est vide => on télécharge la base depuis GitHub
 if not os.path.exists(DB_FILE) or os.path.getsize(DB_FILE) == 0:
-    sync_from_github()
-
-
-if __name__ == "__main__":
-    app.run(debug=True)
+    print("🌀 database.json vide. On le recharge depuis GitHub.")
+    try:
+        r = requests.get(GITHUB_RAW_URL)
+        r.raise_for_status()
+        initial_data = r.json()
+        with open(DB_FILE, "w", encoding="utf-8") as f:
+            json.dump(initial_data, f, indent=2, ensure_ascii=False)
+        print("✅ Base locale initialisée depuis GitHub.")
+    except Exception as e:
+        print("❌ Erreur initialisation locale :", e)
