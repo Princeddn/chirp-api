@@ -269,18 +269,18 @@ class WattecoDecoder(BaseDecoder):
                 raw = int(payload_hex[-4:], 16)
                 value = raw / 100
                 temperature = {"value": value, "unit": "°C"}
-                data = {"Product_type": "THR", "Temperature":temperature}
+                data = {"Product_type": "THR", "temperature":temperature}
 
             elif header == "110a0405":  # Humidité
                 raw = int(payload_hex[-4:], 16)
                 value = raw / 100
                 humidity = {"value": value, "unit": "%RH"}
-                data = {"capteur": "THR", "Humidity": humidity}
+                data = {"Product_type": "THR", "humidity": humidity}
 
             elif header == "110a040c":  # Luminosité (float)
                 value = struct.unpack(">f", bytes.fromhex(payload_hex[-8:]))[0]
                 luminosity = {"value": value, "unit":"Lux"}
-                data = {"Product_type": "THR", "Luminosity":luminosity}
+                data = {"Product_type": "THR", "luminosity":luminosity}
 
             elif header == "110a000c":  # Press'O 4-20 mA
                 value = struct.unpack(">f", bytes.fromhex(payload_hex[-8:]))[0]
