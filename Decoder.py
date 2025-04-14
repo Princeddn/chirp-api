@@ -128,6 +128,7 @@ class NexelecDecoder(BaseDecoder):
 
 
         return {
+            "Fabricant": "Nexelec",
             "Product_type": self.type_of_product(octet_type_produit),
             "temperature": self.decode_temperature(data_temperature),
             "humidity": self.decode_humidity(data_humidity),
@@ -199,6 +200,7 @@ class NexelecDecoder(BaseDecoder):
         
         # Construction du résultat en prenant en compte les codes d'erreur (exemple : 2047 pour PM, etc.)
         result = {
+            "Fabricant": "Nexelec",
             "Product_type": type_product_str,
             "type_message": type_message_str,
             "PM1": pm1 if pm1 != 2047 else "Error",
@@ -269,28 +271,28 @@ class WattecoDecoder(BaseDecoder):
                 raw = int(payload_hex[-4:], 16)
                 value = raw / 100
                 temperature = {"value": value, "unit": "°C"}
-                data = {"Product_type": "THR", "temperature":temperature}
+                data = {"Fabricant":"Watteco","Product_type": "THR", "temperature":temperature}
 
             elif header == "110a0405":  # Humidité
                 raw = int(payload_hex[-4:], 16)
                 value = raw / 100
                 humidity = {"value": value, "unit": "%RH"}
-                data = {"Product_type": "THR", "humidity": humidity}
+                data = {"Fabricant":"Watteco" ,"Product_type": "THR", "humidity": humidity}
 
             elif header == "110a040c":  # Luminosité (float)
                 value = struct.unpack(">f", bytes.fromhex(payload_hex[-8:]))[0]
                 luminosity = {"value": value, "unit":"Lux"}
-                data = {"Product_type": "THR", "luminosity":luminosity}
+                data = {"Fabricant":"Watteco","Product_type": "THR", "luminosity":luminosity}
 
             elif header == "110a000c":  # Press'O 4-20 mA
                 value = struct.unpack(">f", bytes.fromhex(payload_hex[-8:]))[0]
                 Courant = {"value": value, "unit":"mA"}
-                data = {"Product_type": "Press'o 4-20mA", "Courant":Courant}
+                data = {"Fabricant":"Watteco","Product_type": "Press'o 4-20mA", "Courant":Courant}
 
             elif header == "310a000c":  # Press'O 0-10V
                 value = struct.unpack(">f", bytes.fromhex(payload_hex[-8:]))[0]
                 Tension = {"value": value, "unit":"mV"}
-                data = {"Product_type": "Press'o 0-10V", "Tension": Tension}
+                data = {"Fabricant":"Watteco" ,"Product_type": "Press'o 0-10V", "Tension": Tension}
 
             else:
                 data = {"erreur": f"Header inconnu : {header}"}
