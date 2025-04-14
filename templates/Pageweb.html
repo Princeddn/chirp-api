@@ -106,6 +106,44 @@
         }
     }
 
+        async function updateChart() {
+        const capteur = document.getElementById("capteur").value;
+        const grandeur = document.getElementById("grandeur").value;
+
+        if (!capteur || !grandeur) {
+            alert("Sélectionne un capteur et une grandeur avant d'afficher la courbe.");
+            return;
+        }
+
+        const data = await loadData();
+
+        // Filtrer les données sélectionnées
+        const filtered = data.filter(d =>
+            (capteur === "all" || d.deviceInfo?.deviceName === capteur) &&
+            d.decoded?.[grandeur]?.value !== undefined
+        );
+
+        if (filtered.length === 0) {
+            alert("Aucune donnée disponible pour cette sélection.");
+            chart.data.labels = [];
+            chart.data.datasets[0].data = [];
+            chart.update();
+            return;
+        }
+
+        // Extraction des valeurs pour le graphique
+        const labels = filtered.map(d => d.timestamp);
+        const vals = filtered.map(d => d.decoded[grandeur].value);
+
+        // Mise à jour des données du graphique
+        chart.data.labels = labels;
+        chart.data.datasets[0].label = grandeur;
+        chart.data.datasets[0].data = vals;
+
+        chart.update();
+        }
+
+
         async function lancerBackup() {
             const res = await fetch("/uplink?event=push", { method: "POST" });
             const result = await res.json();
