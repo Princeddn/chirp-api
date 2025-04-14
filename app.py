@@ -97,11 +97,12 @@ def uplink():
         csv_file = "export.csv"
         with open(csv_file, "w", newline='') as f:
             writer = csv.writer(f)
-            writer.writerow(["timestamp", "device", "data", "decoded"])
+            writer.writerow(["timestamp", "device","Fabricant" ,"data", "decoded"])
             for row in rows:
                 writer.writerow([
                     row.get("timestamp"),
                     row.get("deviceInfo", {}).get("deviceName"),
+                    row.get("Fabricant"),
                     row.get("data"),
                     json.dumps(row.get("decoded"))
                 ])
