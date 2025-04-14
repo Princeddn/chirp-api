@@ -14,7 +14,7 @@ def push_to_github():
         subprocess.run(["git", "checkout", "-B", "data-backup"], check=True)
         subprocess.run(["git", "add", "database.json"], check=True)
         subprocess.run(["git", "commit", "-m", f"Backup auto {datetime.now()}"], check=True)
-        subprocess.run(["git", "push", repo_url, "data-backup", "--force"], check=True)
+        subprocess.run(["git", "push", repo_url, "data-backup"], check=True)
         print("✅ Sauvegarde GitHub OK")
     except subprocess.CalledProcessError as e:
         print("❌ Échec GitHub:", e)
