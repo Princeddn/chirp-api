@@ -114,7 +114,7 @@ def uplink():
         if isinstance(decoded, dict):
             grandeurs.update(decoded.keys())
 
-    return render_template_string(html, rows=rows, capteurs=capteurs, grandeurs=sorted(grandeurs))
+    return render_template_string("Pageweb.html", rows=rows, capteurs=capteurs, grandeurs=sorted(grandeurs))
 
 @app.route('/trame/<id>')
 def detail_trame(id):
