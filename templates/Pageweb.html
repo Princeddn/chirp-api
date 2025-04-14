@@ -62,22 +62,49 @@
             });
         }
 
-        async function updateChart() {
-            const capteur = document.getElementById("capteur").value;
-            const grandeur = document.getElementById("grandeur").value;
-            const data = await loadData();
-            const filtered = data.filter(d =>
-                (capteur === "all" || d.deviceInfo?.deviceName === capteur) &&
-                d.decoded?.[grandeur]?.value !== undefined
-            );
-            const labels = filtered.map(d => d.timestamp);
-            const vals = filtered.map(d => d.decoded[grandeur].value);
+        async function updateGrandeurs() {
+        const capteur = document.getElementById("capteur").value;
+        const grandeurSelect = document.getElementById("grandeur");
 
-            chart.data.labels = labels;
-            chart.data.datasets[0].label = grandeur;
-            chart.data.datasets[0].data = vals;
-            chart.update();
+        // Réinitialise la liste déroulante des grandeurs
+        grandeurSelect.innerHTML = '';
+
+        if (!capteur || capteur === "all") {
+            grandeurSelect.innerHTML = '<option value="">Sélectionnez d\'abord un capteur</option>';
+            return;
         }
+
+        const data = await loadData();
+
+        // Filtrer uniquement les données correspondant au capteur sélectionné
+        const filteredByCapteur = data.filter(d => d.deviceInfo?.deviceName === capteur);
+
+        // Extraire les grandeurs uniques disponibles
+        const grandeursSet = new Set();
+        filteredByCapteur.forEach(d => {
+            if (d.decoded) {
+                Object.keys(d.decoded).forEach(gr => {
+                    // exclure "Fabricant", "Product_type", etc.
+                    if (typeof d.decoded[gr] === 'object' && d.decoded[gr].hasOwnProperty('value')) {
+                        grandeursSet.add(gr);
+                    }
+                });
+            }
+        });
+
+        // Ajouter les grandeurs disponibles dans la liste déroulante
+        if (grandeursSet.size > 0) {
+            grandeurSelect.innerHTML = '<option value="">Choisissez une grandeur</option>';
+            grandeursSet.forEach(gr => {
+                const option = document.createElement('option');
+                option.value = gr;
+                option.textContent = gr;
+                grandeurSelect.appendChild(option);
+            });
+        } else {
+            grandeurSelect.innerHTML = '<option value="">Aucune grandeur disponible</option>';
+        }
+    }
 
         async function lancerBackup() {
             const res = await fetch("/uplink?event=push", { method: "POST" });
@@ -123,7 +150,7 @@
     <div class="row mb-3">
       <div class="col-md-4">
         <label>🔧 Capteur:</label>
-        <select id="capteur" class="form-select">
+        <select id="capteur" class="form-select" onchange="updateGrandeurs()">
             <option value="all">Tous</option>
             {% for c in capteurs %}
                 <option value="{{c}}">{{c}}</option>
@@ -133,9 +160,7 @@
       <div class="col-md-4">
         <label>🌡️ Grandeur:</label>
         <select id="grandeur" class="form-select">
-            {% for g in grandeurs %}
-                <option value="{{g}}">{{g}}</option>
-            {% endfor %}
+            <option value="">Sélectionnez d'abord un capteur</option>
         </select>
       </div>
       <div class="col-md-4 d-flex align-items-end">
