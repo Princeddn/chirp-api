@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, render_template_string, send_file
+from flask import Flask, request, jsonify, send_file, render_template
 from datetime import datetime
 import json, os, csv, uuid, time
 from github_backup_push import push_to_github
@@ -114,7 +114,7 @@ def uplink():
         if isinstance(decoded, dict):
             grandeurs.update(decoded.keys())
 
-    return render_template_string("Pageweb.html", rows=rows, capteurs=capteurs, grandeurs=sorted(grandeurs))
+    return render_template("Pageweb.html", rows=rows, capteurs=capteurs, grandeurs=sorted(grandeurs))
 
 @app.route('/trame/<id>')
 def detail_trame(id):
