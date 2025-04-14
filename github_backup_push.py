@@ -7,14 +7,29 @@ def push_to_github():
     user = os.getenv("GIT_USER")
     email = os.getenv("GIT_EMAIL")
     repo_url = f"https://{token}@github.com/{user}/chirp-api.git"
+    branch = "data-backup"
 
     try:
+        # Configuration Git
         subprocess.run(["git", "config", "--global", "user.email", email], check=True)
         subprocess.run(["git", "config", "--global", "user.name", user], check=True)
-        subprocess.run(["git", "checkout", "-B", "data-backup"], check=True)
-        subprocess.run(["git", "add", "database.json"], check=True)
-        subprocess.run(["git", "commit", "-m", f"Backup auto {datetime.now()}"], check=True)
-        subprocess.run(["git", "push", repo_url, "data-backup"], check=True)
-        print("✅ Sauvegarde GitHub OK")
+
+        # Vérifier les modifications
+        changed = subprocess.run(["git", "diff", "--quiet", "database.json"]).returncode
+
+        if changed == 1:
+            # Création du commit
+            subprocess.run(["git", "checkout", "-B", branch], check=True)
+            subprocess.run(["git", "add", "database.json"], check=True)
+            commit_msg = f"Backup auto {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+            subprocess.run(["git", "commit", "-m", commit_msg], check=True)
+
+            # Push forcé (nécessaire pour les branches de backup)
+            subprocess.run(["git", "push", "--force", repo_url, f"{branch}:{branch}"], check=True)
+            print("✅ Sauvegarde GitHub OK")
+        else:
+            print("⚠️ Aucun changement détecté")
     except subprocess.CalledProcessError as e:
-        print("❌ Échec GitHub:", e)
+        print(f"❌ Erreur Git: {e}")
+    except Exception as e:
+        print(f"❌ Erreur inattendue: {e}")
