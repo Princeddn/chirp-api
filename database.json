@@ -307,5 +307,117 @@
       "Indice de trame": 1
     },
     "id": "a47e445d-fa4f-41cf-ace9-20ce42cb6856"
+  },
+  {
+    "deduplicationId": "5abd29be-ca4d-4549-a906-3c95f515f614",
+    "time": "2025-04-19T17:47:42.061128229+00:00",
+    "deviceInfo": {
+      "tenantId": "52f14cd4-c6f1-4fbd-8f87-4025e1d49242",
+      "tenantName": "ChirpStack",
+      "applicationId": "f87a578e-1506-449a-876e-89ef53d16265",
+      "applicationName": "lorawan_plug_and_play",
+      "deviceProfileId": "b5371ab3-78b6-48fc-9c7e-895bc736c5e2",
+      "deviceProfileName": "DevPro_lora_plug_and_play",
+      "deviceName": "atmo",
+      "devEui": "70b3d540f457181d",
+      "deviceClassEnabled": "CLASS_A",
+      "tags": {}
+    },
+    "devAddr": "01b0c84c",
+    "adr": true,
+    "dr": 5,
+    "fCnt": 213,
+    "fPort": 56,
+    "confirmed": false,
+    "data": "owEAAAAAPK4gw4c0AQAAAAACxYAV2AAAAEgAAKA=",
+    "rxInfo": [
+      {
+        "gatewayId": "00800000a0003af8",
+        "uplinkId": 15992,
+        "rssi": -117,
+        "snr": 0.2,
+        "channel": 2,
+        "location": {
+          "latitude": 48.118840751658915,
+          "longitude": -1.6365634542805798
+        },
+        "context": "ZuU/aw==",
+        "metadata": {
+          "region_common_name": "EU868",
+          "region_config_id": "eu868"
+        },
+        "crcStatus": "CRC_OK"
+      }
+    ],
+    "txInfo": {
+      "frequency": 868500000,
+      "modulation": {
+        "lora": {
+          "bandwidth": 125000,
+          "spreadingFactor": 7,
+          "codeRate": "CR_4_5"
+        }
+      }
+    },
+    "timestamp": "2025-04-19 17:47:42",
+    "decoded": {
+      "Fabricant": "Nexelec",
+      "Product_type": "ATMO",
+      "type_message": "Real Time Data",
+      "PM1": {
+        "value": 0,
+        "unit": "μg/m³"
+      },
+      "PM2.5": {
+        "value": 0,
+        "unit": "μg/m³"
+      },
+      "PM10": {
+        "value": 0,
+        "unit": "μg/m³"
+      },
+      "temperature": {
+        "value": 18.5,
+        "unit": "°C"
+      },
+      "humidity": {
+        "value": 56.5,
+        "unit": "%RH"
+      },
+      "co2": {
+        "value": 391,
+        "unit": "ppm"
+      },
+      "voc": {
+        "value": 922,
+        "unit": "µg/m³"
+      },
+      "Formaldehyde": {
+        "value": 2,
+        "unit": "ppb"
+      },
+      "Luminosity": {
+        "value": 0,
+        "unit": "lux"
+      },
+      "avg_noise": {
+        "value": 79,
+        "unit": "dBA"
+      },
+      "peak_noise": {
+        "value": 79,
+        "unit": "dBA"
+      },
+      "occupancy_rate": {
+        "value": 0,
+        "unit": "%"
+      },
+      "pressure": {
+        "value": 999,
+        "unit": "hPa"
+      },
+      "Indice de trame": 5
+    },
+    "id": "d543b48e-4dad-4dbd-bb14-b09ca4f899fa"
   }
 ]
