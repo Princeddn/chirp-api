@@ -4005,5 +4005,116 @@
       "Indice de trame": 4
     },
     "id": "43ca9df5-57d8-4972-ace4-ea1257726fd5"
+  },
+  {
+    "deduplicationId": "2247544e-4fa7-4309-bc77-82bfadc26b04",
+    "time": "2025-04-19T19:35:07.244475533+00:00",
+    "deviceInfo": {
+      "tenantId": "52f14cd4-c6f1-4fbd-8f87-4025e1d49242",
+      "tenantName": "ChirpStack",
+      "applicationId": "f87a578e-1506-449a-876e-89ef53d16265",
+      "applicationName": "lorawan_plug_and_play",
+      "deviceProfileId": "b5371ab3-78b6-48fc-9c7e-895bc736c5e2",
+      "deviceProfileName": "DevPro_lora_plug_and_play",
+      "deviceName": "SENSE",
+      "devEui": "70b3d540f5581c81",
+      "deviceClassEnabled": "CLASS_A",
+      "tags": {}
+    },
+    "devAddr": "0133245c",
+    "adr": true,
+    "dr": 5,
+    "fCnt": 179,
+    "fPort": 56,
+    "confirmed": false,
+    "data": "pAEAIAQAu+6AwwcAAAAAAAACdQAV0AAAAEgAAIA=",
+    "rxInfo": [
+      {
+        "gatewayId": "00800000a0003af8",
+        "uplinkId": 39175,
+        "rssi": -119,
+        "snr": -2.2,
+        "location": {
+          "latitude": 48.118840751658915,
+          "longitude": -1.6365634542805798
+        },
+        "context": "5w7sWw==",
+        "metadata": {
+          "region_config_id": "eu868",
+          "region_common_name": "EU868"
+        },
+        "crcStatus": "CRC_OK"
+      }
+    ],
+    "txInfo": {
+      "frequency": 868100000,
+      "modulation": {
+        "lora": {
+          "bandwidth": 125000,
+          "spreadingFactor": 7,
+          "codeRate": "CR_4_5"
+        }
+      }
+    },
+    "timestamp": "2025-04-19 19:35:07",
+    "decoded": {
+      "Fabricant": "Nexelec",
+      "Product_type": "SENSE",
+      "type_message": "Real Time Data",
+      "PM1": {
+        "value": 1,
+        "unit": "μg/m³"
+      },
+      "PM2.5": {
+        "value": 1,
+        "unit": "μg/m³"
+      },
+      "PM10": {
+        "value": 1,
+        "unit": "μg/m³"
+      },
+      "temperature": {
+        "value": 17.900000000000006,
+        "unit": "°C"
+      },
+      "humidity": {
+        "value": 58.0,
+        "unit": "%RH"
+      },
+      "co2": {
+        "value": 390,
+        "unit": "ppm"
+      },
+      "voc": {
+        "value": 896,
+        "unit": "µg/m³"
+      },
+      "Formaldehyde": {
+        "value": 0,
+        "unit": "ppb"
+      },
+      "Luminosity": {
+        "value": 0,
+        "unit": "lux"
+      },
+      "avg_noise": {
+        "value": 74,
+        "unit": "dBA"
+      },
+      "peak_noise": {
+        "value": 75,
+        "unit": "dBA"
+      },
+      "occupancy_rate": {
+        "value": 0,
+        "unit": "%"
+      },
+      "pressure": {
+        "value": 998,
+        "unit": "hPa"
+      },
+      "Indice de trame": 4
+    },
+    "id": "61ede1e5-3894-492f-8edd-870092c375f0"
   }
 ]
