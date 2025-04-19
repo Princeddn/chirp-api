@@ -2852,5 +2852,67 @@
       }
     },
     "id": "31481f1a-9c9d-49a5-bad1-44815f7e7aaf"
+  },
+  {
+    "deduplicationId": "7636d33a-963e-4bdc-b8eb-62b2ed364855",
+    "time": "2025-04-19T19:03:55.024688941+00:00",
+    "deviceInfo": {
+      "tenantId": "52f14cd4-c6f1-4fbd-8f87-4025e1d49242",
+      "tenantName": "ChirpStack",
+      "applicationId": "f87a578e-1506-449a-876e-89ef53d16265",
+      "applicationName": "lorawan_plug_and_play",
+      "deviceProfileId": "b5371ab3-78b6-48fc-9c7e-895bc736c5e2",
+      "deviceProfileName": "DevPro_lora_plug_and_play",
+      "deviceName": "THR",
+      "devEui": "70b3d5e75e007634",
+      "deviceClassEnabled": "CLASS_A",
+      "tags": {}
+    },
+    "devAddr": "01929ba0",
+    "adr": true,
+    "dr": 5,
+    "fCnt": 826,
+    "fPort": 125,
+    "confirmed": false,
+    "data": "EQoADABVOQAAAAA=",
+    "rxInfo": [
+      {
+        "gatewayId": "00800000a0003af8",
+        "uplinkId": 15862,
+        "rssi": -109,
+        "snr": -3.8,
+        "channel": 2,
+        "location": {
+          "latitude": 48.118840751658915,
+          "longitude": -1.6365634542805798
+        },
+        "context": "d3dOww==",
+        "metadata": {
+          "region_config_id": "eu868",
+          "region_common_name": "EU868"
+        },
+        "crcStatus": "CRC_OK"
+      }
+    ],
+    "txInfo": {
+      "frequency": 868500000,
+      "modulation": {
+        "lora": {
+          "bandwidth": 125000,
+          "spreadingFactor": 7,
+          "codeRate": "CR_4_5"
+        }
+      }
+    },
+    "timestamp": "2025-04-19 19:03:55",
+    "decoded": {
+      "Fabricant": "Watteco",
+      "Product_type": "Press'o 4-20mA",
+      "Courant": {
+        "value": 0.0,
+        "unit": "mA"
+      }
+    },
+    "id": "584ab6c8-958b-4085-86d4-ff8118adf1e9"
   }
 ]
