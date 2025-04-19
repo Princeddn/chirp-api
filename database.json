@@ -2058,5 +2058,91 @@
       "Indice de trame": 2
     },
     "id": "357ed098-a026-4ee8-9b2e-db4490364751"
+  },
+  {
+    "deduplicationId": "f71fb992-8e25-44ad-bcdc-9086cd7e73f5",
+    "time": "2025-04-19T18:39:52.717460788+00:00",
+    "deviceInfo": {
+      "tenantId": "52f14cd4-c6f1-4fbd-8f87-4025e1d49242",
+      "tenantName": "ChirpStack",
+      "applicationId": "f87a578e-1506-449a-876e-89ef53d16265",
+      "applicationName": "lorawan_plug_and_play",
+      "deviceProfileId": "b5371ab3-78b6-48fc-9c7e-895bc736c5e2",
+      "deviceProfileName": "DevPro_lora_plug_and_play",
+      "deviceName": "Device_SIGN",
+      "devEui": "70b3d540f658500c",
+      "deviceClassEnabled": "CLASS_A",
+      "tags": {}
+    },
+    "devAddr": "003f668c",
+    "adr": true,
+    "dr": 5,
+    "fCnt": 270,
+    "fPort": 56,
+    "confirmed": false,
+    "data": "rQF34rBugn8ADBmAAAA=",
+    "rxInfo": [
+      {
+        "gatewayId": "00800000a0003af8",
+        "uplinkId": 14222,
+        "rssi": -116,
+        "snr": 4.2,
+        "location": {
+          "latitude": 48.118840751658915,
+          "longitude": -1.6365634542805798
+        },
+        "context": "IX+ESw==",
+        "metadata": {
+          "region_common_name": "EU868",
+          "region_config_id": "eu868"
+        },
+        "crcStatus": "CRC_OK"
+      }
+    ],
+    "txInfo": {
+      "frequency": 868100000,
+      "modulation": {
+        "lora": {
+          "bandwidth": 125000,
+          "spreadingFactor": 7,
+          "codeRate": "CR_4_5"
+        }
+      }
+    },
+    "timestamp": "2025-04-19 18:39:52",
+    "decoded": {
+      "Fabricant": "Nexelec",
+      "Product_type": "SIGN",
+      "temperature": {
+        "value": 17.9,
+        "unit": "°C"
+      },
+      "humidity": {
+        "value": 55.5,
+        "unit": "%RH"
+      },
+      "co2": {
+        "value": 442,
+        "unit": "ppm"
+      },
+      "voc": {
+        "value": 639,
+        "unit": "µg/m³"
+      },
+      "luminosity": {
+        "value": 0,
+        "unit": "lux"
+      },
+      "avg_noise": {
+        "value": 48,
+        "unit": "dB"
+      },
+      "peak_noise": {
+        "value": 51,
+        "unit": "dB"
+      },
+      "occupancy_rate": 0
+    },
+    "id": "4549831d-f01b-44ea-86f3-495920bb0387"
   }
 ]
