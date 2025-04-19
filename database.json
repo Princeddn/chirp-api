@@ -2914,5 +2914,61 @@
       }
     },
     "id": "584ab6c8-958b-4085-86d4-ff8118adf1e9"
+  },
+  {
+    "deduplicationId": "18b0426f-28ad-4f5b-948e-ff4985203454",
+    "time": "2025-04-19T19:05:31.283542106+00:00",
+    "deviceInfo": {
+      "tenantId": "52f14cd4-c6f1-4fbd-8f87-4025e1d49242",
+      "tenantName": "ChirpStack",
+      "applicationId": "f87a578e-1506-449a-876e-89ef53d16265",
+      "applicationName": "lorawan_plug_and_play",
+      "deviceProfileId": "b5371ab3-78b6-48fc-9c7e-895bc736c5e2",
+      "deviceProfileName": "DevPro_lora_plug_and_play",
+      "deviceName": "SENSE",
+      "devEui": "70b3d540f5581c81",
+      "deviceClassEnabled": "CLASS_A",
+      "tags": {}
+    },
+    "devAddr": "0133245c",
+    "adr": true,
+    "dr": 5,
+    "fCnt": 175,
+    "fPort": 56,
+    "confirmed": false,
+    "data": "pAICDFLgcEAEAAAAAAA=",
+    "rxInfo": [
+      {
+        "gatewayId": "00800000a0003af8",
+        "uplinkId": 49672,
+        "rssi": -115,
+        "channel": 2,
+        "location": {
+          "latitude": 48.118840751658915,
+          "longitude": -1.6365634542805798
+        },
+        "context": "fTPCww==",
+        "metadata": {
+          "region_config_id": "eu868",
+          "region_common_name": "EU868"
+        },
+        "crcStatus": "CRC_OK"
+      }
+    ],
+    "txInfo": {
+      "frequency": 868500000,
+      "modulation": {
+        "lora": {
+          "bandwidth": 125000,
+          "spreadingFactor": 7,
+          "codeRate": "CR_4_5"
+        }
+      }
+    },
+    "timestamp": "2025-04-19 19:05:31",
+    "decoded": {
+      "error": "invalid literal for int() with base 2: ''"
+    },
+    "id": "f7f2df94-2eb6-4a3e-8601-62c8a604ace8"
   }
 ]
