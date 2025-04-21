@@ -14,21 +14,21 @@
   </style>
 </head>
 <body class="container">
+
   <h1 class="mb-4">📡 Dashboard Capteurs LoRa</h1>
 
+  <!-- Zone de message -->
+  <div id="message-container" class="alert alert-warning d-none" role="alert"></div>
+
+  <!-- Onglets navigation -->
   <ul class="nav nav-tabs mb-4" id="myTabs">
-    <li class="nav-item">
-      <a class="nav-link active" data-bs-toggle="tab" href="#graphe">📊 Graphe</a>
-    </li>
-    <li class="nav-item">
-      <a class="nav-link" data-bs-toggle="tab" href="#tableau">📋 Tableau</a>
-    </li>
-    <li class="nav-item">
-      <a class="nav-link" data-bs-toggle="tab" href="#export">📄 Exportation</a>
-    </li>
+    <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#graphe">📊 Graphe</a></li>
+    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tableau">📋 Tableau</a></li>
+    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#export">📄 Exportation</a></li>
   </ul>
 
   <div class="tab-content">
+    <!-- Onglet Graphe -->
     <div class="tab-pane fade show active" id="graphe">
       <div class="mb-3 d-flex flex-wrap align-items-center gap-3">
         <span class="badge bg-secondary" id="nb-trames">0 trames affichées</span>
@@ -42,7 +42,7 @@
             <select id="capteur" class="form-select" onchange="updateGrandeurs()">
               <option value="all">Tous</option>
               {% for c in capteurs %}
-                <option value="{{c}}">{{c}}</option>
+              <option value="{{c}}">{{c}}</option>
               {% endfor %}
             </select>
           </div>
@@ -74,6 +74,7 @@
       <canvas id="chart" style="max-width: 100%; height: 300px;"></canvas>
     </div>
 
+    <!-- Onglet Tableau -->
     <div class="tab-pane fade" id="tableau">
       <div class="card p-3">
         <h4>📋 Données Reçues (avec pagination)</h4>
@@ -95,13 +96,14 @@
       </div>
     </div>
 
+    <!-- Onglet Export -->
     <div class="tab-pane fade" id="export">
       <div class="card p-3">
-        <h4>📄 Exportation & Sauvegarde</h4>
+        <h4>📤 Exportation & Sauvegarde</h4>
         <div class="d-flex gap-3 flex-wrap">
           <button class="btn btn-outline-primary" onclick="location.href='/uplink?format=json'">📄 JSON</button>
           <button class="btn btn-outline-success" onclick="location.href='/uplink?format=csv'">⬇️ CSV</button>
-          <button class="btn btn-outline-info" onclick="lancerBackup()">📀 Sauvegarde GitHub</button>
+          <button class="btn btn-outline-info" onclick="lancerBackup()">💾 Sauvegarde GitHub</button>
         </div>
       </div>
     </div>
@@ -110,9 +112,71 @@
   <script>
     let chart, currentData = [], rowsPerPage = 10, currentPage = 1;
 
+    function toUTCDateFromLocalInput(dateStr) {
+      if (!dateStr) return null;
+      const localDate = new Date(dateStr);
+      const utcTimestamp = localDate.getTime() + (localDate.getTimezoneOffset() * 60000);
+      return new Date(utcTimestamp);
+    }
+
+    function showMessage(msg) {
+      const container = document.getElementById("message-container");
+      container.classList.remove("d-none");
+      container.textContent = msg;
+      setTimeout(() => container.classList.add("d-none"), 5000);
+    }
+
     async function loadData() {
       const res = await fetch('/uplink?format=json');
       return await res.json();
+    }
+
+    async function updateChart() {
+      const capteur = document.getElementById("capteur").value;
+      const startInput = document.getElementById("start-time").value;
+      const endInput = document.getElementById("end-time").value;
+      const selected = Array.from(document.querySelectorAll("#grandeur-checkboxes input:checked")).map(cb => cb.value);
+
+      if (!capteur || selected.length === 0) {
+        showMessage("Sélectionne un capteur et au moins une grandeur.");
+        return;
+      }
+
+      const data = await loadData();
+      const startDate = toUTCDateFromLocalInput(startInput);
+      const endDate = toUTCDateFromLocalInput(endInput);
+
+      const filtered = data.filter(d => {
+        if (!d.timestamp) return false;
+        const ts = new Date(d.timestamp);
+        if (isNaN(ts)) return false;
+        return (!startDate || ts >= startDate) && (!endDate || ts <= endDate) &&
+               (capteur === "all" || d.decoded?.Product_type === capteur);
+      });
+
+      if (filtered.length === 0) {
+        showMessage("Aucune donnée trouvée pour cette période ou ce capteur.");
+        return;
+      }
+
+      const labels = filtered.map(d => d.timestamp);
+      const datasets = selected.map((g, i) => ({
+        label: g,
+        data: filtered.map(d => {
+          const val = d.decoded?.[g]?.value;
+          return typeof val === 'number' ? val : null;
+        }),
+        borderColor: getColor(i),
+        fill: false,
+        tension: 0.3
+      }));
+
+      chart.data.labels = labels;
+      chart.data.datasets = datasets;
+      chart.update();
+
+      document.getElementById("nb-trames").textContent = `${filtered.length} / ${data.length} trames affichées`;
+      document.getElementById("last-update").textContent = "Dernière mise à jour : " + new Date().toLocaleString('fr-FR');
     }
 
     function clearDates() {
@@ -135,67 +199,6 @@
       link.href = chart.toBase64Image();
       link.click();
     }
-
-    async function updateChart() {
-        const capteur = document.getElementById("capteur").value;
-        const startInput = document.getElementById("start-time").value;
-        const endInput = document.getElementById("end-time").value;
-        const selected = Array.from(document.querySelectorAll("#grandeur-checkboxes input:checked"))
-                                .map(cb => cb.value);
-
-        // Vérification des champs requis
-        if (!capteur || selected.length === 0) {
-            alert("Sélectionne un capteur et au moins une grandeur.");
-            return;
-        }
-
-        // Chargement des données
-        const data = await loadData();
-
-        // Filtrage selon la période et le capteur sélectionné
-        const filtered = data.filter(d => {
-            if (!d.timestamp) return false;
-            const ts = new Date(d.timestamp); // format ISO ou UTC
-            const startDate = startInput ? new Date(startInput) : null;
-            const endDate = endInput ? new Date(endInput) : null;
-
-            if (isNaN(ts)) return false;
-
-            const tsOK = (!startDate || ts >= startDate) && (!endDate || ts <= endDate);
-            const capteurOK = (capteur === "all" || d.decoded?.Product_type === capteur);
-
-            return tsOK && capteurOK;
-        });
-
-        // Si aucun résultat, message utilisateur
-        if (filtered.length === 0) {
-            alert("Aucune donnée trouvée pour cette période ou ce capteur.");
-            return;
-        }
-
-        // Préparation des données pour Chart.js
-        const labels = filtered.map(d => d.timestamp);
-        const datasets = selected.map((g, i) => ({
-            label: g,
-            data: filtered.map(d => {
-            const val = d.decoded?.[g]?.value;
-            return typeof val === 'number' ? val : null;
-            }),
-            borderColor: getColor(i),
-            fill: false,
-            tension: 0.3
-        }));
-
-        // Mise à jour du graphique
-        chart.data.labels = labels;
-        chart.data.datasets = datasets;
-        chart.update();
-
-        // Mise à jour de l'interface
-        document.getElementById("nb-trames").textContent = `${filtered.length} / ${data.length} trames affichées`;
-        document.getElementById("last-update").textContent = "Dernière mise à jour : " + new Date().toLocaleString('fr-FR');
-}
-
 
     function resetFilters() {
       document.getElementById("capteur").value = "all";
@@ -283,7 +286,7 @@
     async function lancerBackup() {
       const res = await fetch("/uplink?event=push", { method: "POST" });
       const result = await res.json();
-      alert(result.status);
+      showMessage(result.status);
     }
 
     window.onload = async function () {
