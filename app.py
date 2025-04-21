@@ -135,7 +135,8 @@ def uplink():
         data = request.json
         decoded = decode_lorawan_data(data.get("data", ""))
         paris_tz = timezone('Europe/Paris')
-        data["timestamp"] = datetime.now(paris_tz).strftime('%Y-%m-%d %H:%M:%S %Z')        data["decoded"] = decoded
+        data["timestamp"] = datetime.now(paris_tz).strftime('%Y-%m-%d %H:%M:%S %Z')        
+        data["decoded"] = decoded
         data["id"] = str(uuid.uuid4())
         print("📡 Donnée reçue + décodée :", data)
         save_data([data])
