@@ -132,7 +132,7 @@
           if (d.decoded?.co2?.value > 1000) tr.classList.add('alarm');
           tr.innerHTML = `
             <td>${d.timestamp || ''}</td>
-            <td>${d.deviceInfo?.deviceName || ''}</td>
+            <td>${d.decoded?.Product_type || 'Inconnu'}</td>
             <td>${d.decoded?.Fabricant || 'N/A'}</td>
             <td><pre>${d.data || ''}</pre></td>
             <td><pre>${JSON.stringify(d.decoded, null, 2)}</pre></td>
@@ -169,7 +169,7 @@
   
         if (capteur === "all") return;
         const data = await loadData();
-        const filtered = data.filter(d => d.deviceInfo?.deviceName === capteur);
+        const filtered = data.filter(d => d.decoded?.Product_type === capteur);
         const grandeursSet = new Set();
   
         filtered.forEach(d => {
@@ -205,7 +205,7 @@
         const data = await loadData();
         const filtered = data.filter(d => {
           const ts = new Date(d.timestamp);
-          return (capteur === "all" || d.deviceInfo?.deviceName === capteur)
+          return (capteur === "all" || d.decoded?.Product_type === capteur)
             && (!start || ts >= new Date(start))
             && (!end || ts <= new Date(end));
         });

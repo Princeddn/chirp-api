@@ -161,15 +161,18 @@ def uplink():
         csv_file = "export.csv"
         with open(csv_file, "w", newline='') as f:
             writer = csv.writer(f)
-            writer.writerow(["timestamp", "device","Fabricant" ,"data", "decoded"])
+            writer.writerow(["timestamp", "Product_type", "Fabricant", "data", "decoded"])
             for row in rows:
+                decoded = row.get("decoded", {})
+                product_type = decoded.get("Product_type", "Inconnu")
                 writer.writerow([
                     row.get("timestamp"),
-                    row.get("deviceInfo", {}).get("deviceName"),
-                    row.get("Fabricant"),
+                    product_type,
+                    decoded.get("Fabricant", "N/A"),
                     row.get("data"),
-                    json.dumps(row.get("decoded"))
+                    json.dumps(decoded, ensure_ascii=False)
                 ])
+
         return send_file(csv_file, as_attachment=True)
 
     capteurs = sorted({r.get("deviceInfo", {}).get("deviceName") for r in rows if r.get("deviceInfo")})
