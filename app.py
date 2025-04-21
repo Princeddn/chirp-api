@@ -175,7 +175,7 @@ def uplink():
 
         return send_file(csv_file, as_attachment=True)
 
-    capteurs = sorted({r.get("deviceInfo", {}).get("deviceName") for r in rows if r.get("deviceInfo")})
+    capteurs = sorted({r.get("decoded", {}).get("Product_type") for r in rows if "Product_type" in r.get("decoded", {})})
     grandeurs = set()
     for r in rows:
         decoded = r.get("decoded", {})
