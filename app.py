@@ -31,15 +31,21 @@ def restore_database_from_github(force=False):
     else:
         print("🟢 database.json déjà présent, aucune restauration nécessaire.")
 
+# 🧠 Restaurer la base avant tout autre traitement
+restore_database_from_github()
 
 def load_data_local():
     """Lit localement database.json."""
     try:
         with open(DB_FILE, "r", encoding="utf-8") as f:
             return json.load(f)
+    except (json.JSONDecodeError, UnicodeDecodeError) as e:
+        print(f"❌ database.json corrompu : {e}")
+        return []
     except Exception as e:
         print(f"⚠️ Erreur lecture locale : {e}")
         return []
+
 
 def load_data_github():
     """Lit directement depuis GitHub pour l'affichage du dashboard."""
@@ -52,9 +58,16 @@ def load_data_github():
         print("❌ Erreur lecture GitHub pour affichage :", e)
         return []
 
+# 💾 Sauvegarde robuste avec restauration si nécessaire
 def save_data(new_entries):
-    """Ajoute les nouvelles entrées en local, puis push GitHub."""
     current = load_data_local()
+
+    # ✅ Si le fichier est corrompu ou mal formé, on restaure avant d'ajouter
+    if not isinstance(current, list):
+        print("⚠️ Base locale mal formée. Tentative de restauration.")
+        restore_database_from_github(force=True)
+        current = load_data_local()
+
     existing_ids = {d.get("id") for d in current}
     new_data = [d for d in new_entries if d.get("id") not in existing_ids]
 
@@ -63,11 +76,12 @@ def save_data(new_entries):
         with open(DB_FILE, "w", encoding="utf-8") as f:
             json.dump(current, f, indent=2, ensure_ascii=False)
         print(f"✅ {len(new_data)} nouvelle(s) donnée(s) sauvegardée(s)")
-
-        time.sleep(0.2)  # Petit délai avant push
+        time.sleep(0.2)
         push_to_github()
     else:
         print("ℹ️ Pas de nouvelles données à sauvegarder")
+
+        
 def decode_lorawan_data(encoded_data):
     try:
         decoded_bytes = convertion.identify_and_process_data(encoded_data)
@@ -153,7 +167,5 @@ def detail_trame(id):
         return "Trame non trouvée", 404
     return f"<h2>Détail trame {id}</h2><pre>{json.dumps(entry, indent=2)}</pre>"
 
-# Au démarrage, si le local est vide => on télécharge la base depuis GitHub
-# Au démarrage, on restaure automatiquement si besoin
-restore_database_from_github()
+
     
