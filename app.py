@@ -116,7 +116,7 @@ def decode_lorawan_data(encoded_data):
         else:
             product_type_2octets = int(decoded_hex[:4], 16)
             if product_type_2octets in [0x110A, 0x310A]:
-                return decoder_watteco.decode_presso(decoded_hex)
+                return decoder_watteco.decode_watteco(decoded_hex)
             else:
                 return {"error": f"Type inconnu : 0x{product_type_2octets:04X}"}
     except Exception as e:

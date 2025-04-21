@@ -261,7 +261,7 @@ class NexelecDecoder(BaseDecoder):
 class WattecoDecoder(BaseDecoder):
 
         
-    def decode_presso(self, payload_hex: str) -> dict:
+    def decode_watteco(self, payload_hex: str) -> dict:
         try:
             header = payload_hex[:8].lower()
             data = {}
