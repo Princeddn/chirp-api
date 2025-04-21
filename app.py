@@ -12,6 +12,7 @@ convertion = BaseDecoder()
 decoder_nexelec = NexelecDecoder()
 decoder_watteco = WattecoDecoder()
 
+
 def restore_database_from_github(force=False):
     """
     Restaure la base locale depuis GitHub si elle est vide ou absente,
@@ -31,8 +32,27 @@ def restore_database_from_github(force=False):
     else:
         print("🟢 database.json déjà présent, aucune restauration nécessaire.")
 
-# 🧠 Restaurer la base avant tout autre traitement
+def ensure_valid_json_file():
+    """Vérifie que database.json est un JSON UTF-8 valide, sinon restaure."""
+    if not os.path.exists(DB_FILE):
+        print("❗ database.json n'existe pas encore.")
+        restore_database_from_github(force=True)
+        return
+
+    try:
+        with open(DB_FILE, "r", encoding="utf-8") as f:
+            json.load(f)
+    except (json.JSONDecodeError, UnicodeDecodeError) as e:
+        print(f"❌ database.json invalide au démarrage : {e}")
+        restore_database_from_github(force=True)
+    except Exception as e:
+        print(f"⚠️ Erreur inconnue lors de la vérification de database.json : {e}")
+
+
+# 🔁 Restaurer et vérifier tout de suite
 restore_database_from_github()
+ensure_valid_json_file()
+
 
 def load_data_local():
     """Lit localement database.json."""
