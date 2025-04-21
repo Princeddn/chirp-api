@@ -12,6 +12,26 @@ convertion = BaseDecoder()
 decoder_nexelec = NexelecDecoder()
 decoder_watteco = WattecoDecoder()
 
+def restore_database_from_github(force=False):
+    """
+    Restaure la base locale depuis GitHub si elle est vide ou absente,
+    ou si 'force=True' est spécifié.
+    """
+    if force or not os.path.exists(DB_FILE) or os.path.getsize(DB_FILE) == 0:
+        print("🔁 Restauration de database.json depuis GitHub...")
+        try:
+            r = requests.get(GITHUB_RAW_URL)
+            r.raise_for_status()
+            data = r.json()
+            with open(DB_FILE, "w", encoding="utf-8") as f:
+                json.dump(data, f, indent=2, ensure_ascii=False)
+            print("✅ Base locale restaurée depuis GitHub.")
+        except Exception as e:
+            print(f"❌ Erreur restauration GitHub : {e}")
+    else:
+        print("🟢 database.json déjà présent, aucune restauration nécessaire.")
+
+
 def load_data_local():
     """Lit localement database.json."""
     try:
@@ -85,9 +105,18 @@ def uplink():
         print("📡 Donnée reçue + décodée :", data)
         save_data([data])
         return jsonify({"status": "ok"}), 200
+    
+    
+    # 🔁 Forcer la restauration depuis GitHub via URL
+    if request.args.get("restore") == "1":
+        restore_database_from_github(force=True)
+        return jsonify({"status": "🔁 Base restaurée depuis GitHub"}), 200
+
 
     rows = load_data_github()
     fmt = request.args.get("format")
+
+
 
     if fmt == "json":
         return jsonify(rows)
@@ -125,14 +154,6 @@ def detail_trame(id):
     return f"<h2>Détail trame {id}</h2><pre>{json.dumps(entry, indent=2)}</pre>"
 
 # Au démarrage, si le local est vide => on télécharge la base depuis GitHub
-if not os.path.exists(DB_FILE) or os.path.getsize(DB_FILE) == 0:
-    print("🌀 database.json vide. On le recharge depuis GitHub.")
-    try:
-        r = requests.get(GITHUB_RAW_URL)
-        r.raise_for_status()
-        initial_data = r.json()
-        with open(DB_FILE, "w", encoding="utf-8") as f:
-            json.dump(initial_data, f, indent=2, ensure_ascii=False)
-        print("✅ Base locale initialisée depuis GitHub.")
-    except Exception as e:
-        print("❌ Erreur initialisation locale :", e)
+# Au démarrage, on restaure automatiquement si besoin
+restore_database_from_github()
+    
