@@ -16,11 +16,8 @@
 <body class="container">
 
   <h1 class="mb-4">📡 Dashboard Capteurs LoRa</h1>
-
-  <!-- Zone de message -->
   <div id="message-container" class="alert alert-warning d-none" role="alert"></div>
 
-  <!-- Onglets navigation -->
   <ul class="nav nav-tabs mb-4" id="myTabs">
     <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#graphe">📊 Graphe</a></li>
     <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tableau">📋 Tableau</a></li>
@@ -28,7 +25,6 @@
   </ul>
 
   <div class="tab-content">
-    <!-- Onglet Graphe -->
     <div class="tab-pane fade show active" id="graphe">
       <div class="mb-3 d-flex flex-wrap align-items-center gap-3">
         <span class="badge bg-secondary" id="nb-trames">0 trames affichées</span>
@@ -74,7 +70,6 @@
       <canvas id="chart" style="max-width: 100%; height: 300px;"></canvas>
     </div>
 
-    <!-- Onglet Tableau -->
     <div class="tab-pane fade" id="tableau">
       <div class="card p-3">
         <h4>📋 Données Reçues (avec pagination)</h4>
@@ -90,13 +85,10 @@
           </thead>
           <tbody id="sensor-tbody"></tbody>
         </table>
-        <nav>
-          <ul class="pagination" id="pagination"></ul>
-        </nav>
+        <nav><ul class="pagination" id="pagination"></ul></nav>
       </div>
     </div>
 
-    <!-- Onglet Export -->
     <div class="tab-pane fade" id="export">
       <div class="card p-3">
         <h4>📤 Exportation & Sauvegarde</h4>
@@ -117,6 +109,14 @@
       const localDate = new Date(dateStr);
       const utcTimestamp = localDate.getTime() + (localDate.getTimezoneOffset() * 60000);
       return new Date(utcTimestamp);
+    }
+
+    function parseFlexibleDate(input) {
+      const iso = Date.parse(input);
+      if (!isNaN(iso)) return new Date(iso);
+      const cleaned = input.replace(/ CEST| CET| UTC| GMT.*$/, '');
+      const attempt = new Date(cleaned);
+      return isNaN(attempt) ? null : attempt;
     }
 
     function showMessage(msg) {
@@ -148,10 +148,12 @@
 
       const filtered = data.filter(d => {
         if (!d.timestamp) return false;
-        const ts = new Date(d.timestamp);
-        if (isNaN(ts)) return false;
-        return (!startDate || ts >= startDate) && (!endDate || ts <= endDate) &&
-               (capteur === "all" || d.decoded?.Product_type === capteur);
+        const ts = parseFlexibleDate(d.timestamp);
+        if (!ts) return false;
+
+        const tsOK = (!startDate || ts >= startDate) && (!endDate || ts <= endDate);
+        const capteurOK = (capteur === "all" || d.decoded?.Product_type === capteur);
+        return tsOK && capteurOK;
       });
 
       if (filtered.length === 0) {
