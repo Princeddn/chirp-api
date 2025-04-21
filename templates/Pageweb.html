@@ -1,229 +1,200 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <title>Dashboard LoRa </title>
-    <!-- Bootstrap CSS -->
-    <link rel="stylesheet"
-          href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css">
-    <style>
-      body { margin: 20px; }
-      pre { margin: 0; }
-      .alarm { background-color: #ffcccc !important; }
-    </style>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-        let chart;
-        async function loadData() {
-            const res = await fetch('/uplink?format=json');
-            return await res.json();
-        }
-
-        // Rafraîchit le tableau toutes les X secondes
-        async function autoRefresh() {
-            await refreshTable();
-            setTimeout(autoRefresh, 10000); // toutes les 10s
-        }
-
-        async function refreshTable() {
-            const data = await loadData();
-            const tbody = document.getElementById('sensor-tbody');
-            tbody.innerHTML = '';
-
-            data.forEach(d => {
-                const tr = document.createElement('tr');
-
-                // Check alarme co2
-                if (d.decoded?.co2?.value > 1000) {
-                   tr.classList.add('alarm');
-                }
-
-                const tdTime = document.createElement('td');
-                tdTime.innerHTML = d.timestamp || '';
-                tr.appendChild(tdTime);
-
-                const tdDevice = document.createElement('td');
-                tdDevice.innerHTML = d.deviceInfo?.deviceName || '';
-                tr.appendChild(tdDevice);
-
-                // Nouvel élément fabricant
-                const tdFabricant = document.createElement('td');
-                tdFabricant.innerHTML = d.decoded?.Fabricant || 'N/A';
-                tr.appendChild(tdFabricant);
-
-                const tdData = document.createElement('td');
-                tdData.innerHTML = '<pre>'+(d.data || '')+'</pre>';
-                tr.appendChild(tdData);
-
-                const tdDecoded = document.createElement('td');
-                tdDecoded.innerHTML = '<pre>'+JSON.stringify(d.decoded, null, 2)+'</pre>';
-                tr.appendChild(tdDecoded);
-
-                tbody.appendChild(tr);
-            });
-        }
-
-        async function updateGrandeurs() {
-        const capteur = document.getElementById("capteur").value;
-        const grandeurSelect = document.getElementById("grandeur");
-
-        // Réinitialise la liste déroulante des grandeurs
-        grandeurSelect.innerHTML = '';
-
-        if (!capteur || capteur === "all") {
-            grandeurSelect.innerHTML = '<option value="">Sélectionnez d\'abord un capteur</option>';
-            return;
-        }
-
-        const data = await loadData();
-
-        // Filtrer uniquement les données correspondant au capteur sélectionné
-        const filteredByCapteur = data.filter(d => d.deviceInfo?.deviceName === capteur);
-
-        // Extraire les grandeurs uniques disponibles
-        const grandeursSet = new Set();
-        filteredByCapteur.forEach(d => {
-            if (d.decoded) {
-                Object.keys(d.decoded).forEach(gr => {
-                    // exclure "Fabricant", "Product_type", etc.
-                    if (typeof d.decoded[gr] === 'object' && d.decoded[gr].hasOwnProperty('value')) {
-                        grandeursSet.add(gr);
-                    }
-                });
-            }
-        });
-
-        // Ajouter les grandeurs disponibles dans la liste déroulante
-        if (grandeursSet.size > 0) {
-            grandeurSelect.innerHTML = '<option value="">Choisissez une grandeur</option>';
-            grandeursSet.forEach(gr => {
-                const option = document.createElement('option');
-                option.value = gr;
-                option.textContent = gr;
-                grandeurSelect.appendChild(option);
-            });
-        } else {
-            grandeurSelect.innerHTML = '<option value="">Aucune grandeur disponible</option>';
-        }
-    }
-
-        async function updateChart() {
-        const capteur = document.getElementById("capteur").value;
-        const grandeur = document.getElementById("grandeur").value;
-
-        if (!capteur || !grandeur) {
-            alert("Sélectionne un capteur et une grandeur avant d'afficher la courbe.");
-            return;
-        }
-
-        const data = await loadData();
-
-        // Filtrer les données sélectionnées
-        const filtered = data.filter(d =>
-            (capteur === "all" || d.deviceInfo?.deviceName === capteur) &&
-            d.decoded?.[grandeur]?.value !== undefined
-        );
-
-        if (filtered.length === 0) {
-            alert("Aucune donnée disponible pour cette sélection.");
-            chart.data.labels = [];
-            chart.data.datasets[0].data = [];
-            chart.update();
-            return;
-        }
-
-        // Extraction des valeurs pour le graphique
-        const labels = filtered.map(d => d.timestamp);
-        const vals = filtered.map(d => d.decoded[grandeur].value);
-
-        // Mise à jour des données du graphique
-        chart.data.labels = labels;
-        chart.data.datasets[0].label = grandeur;
-        chart.data.datasets[0].data = vals;
-
-        chart.update();
-        }
-
-
-        async function lancerBackup() {
-            const res = await fetch("/uplink?event=push", { method: "POST" });
-            const result = await res.json();
-            alert(result.status);
-        }
-
-        window.onload = async function() {
-            // Initial chart
-            const ctx = document.getElementById('chart').getContext('2d');
-            chart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: [],
-                    datasets: [{
-                        label: 'Valeur',
-                        data: [],
-                        borderColor: 'blue',
-                        borderWidth: 2,
-                        fill: false
-                    }]
-                },
-                options: {
-                    responsive: true
-                }
-            });
-
-            // Premier refresh
-            await refreshTable();
-            // auto refresh
-            autoRefresh();
-        }
-    </script>
+  <title>Dashboard LoRa</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { margin: 20px; }
+    pre { margin: 0; }
+    .alarm { background-color: #ffcccc !important; }
+  </style>
 </head>
 <body class="container">
-    <h1 class="mt-4 mb-4">📡 Dashboard Capteurs LoRa </h1>
-    <div class="mb-3">
-        <button class="btn btn-outline-primary me-2" onclick="location.href='/uplink?format=json'">📄 JSON</button>
-        <button class="btn btn-outline-success me-2" onclick="location.href='/uplink?format=csv'">⬇️ Export CSV</button>
-        <button class="btn btn-outline-info" onclick="lancerBackup()">💾 Sauvegarde GitHub</button>
+  <h1 class="mt-4 mb-4">📡 Dashboard Capteurs LoRa</h1>
+
+  <div class="mb-3">
+    <button class="btn btn-outline-primary me-2" onclick="location.href='/uplink?format=json'">📄 JSON</button>
+    <button class="btn btn-outline-success me-2" onclick="location.href='/uplink?format=csv'">⬇️ Export CSV</button>
+    <button class="btn btn-outline-info" onclick="lancerBackup()">💾 Sauvegarde GitHub</button>
+  </div>
+
+  <!-- Filtres capteur, grandeur -->
+  <div class="row mb-3">
+    <div class="col-md-4">
+      <label>🔧 Capteur:</label>
+      <select id="capteur" class="form-select" onchange="updateGrandeurs()">
+        <option value="all">Tous</option>
+        {% for c in capteurs %}
+          <option value="{{c}}">{{c}}</option>
+        {% endfor %}
+      </select>
     </div>
-
-    <div class="row mb-3">
-      <div class="col-md-4">
-        <label>🔧 Capteur:</label>
-        <select id="capteur" class="form-select" onchange="updateGrandeurs()">
-            <option value="all">Tous</option>
-            {% for c in capteurs %}
-                <option value="{{c}}">{{c}}</option>
-            {% endfor %}
-        </select>
-      </div>
-      <div class="col-md-4">
-        <label>🌡️ Grandeur:</label>
-        <select id="grandeur" class="form-select">
-            <option value="">Sélectionnez d'abord un capteur</option>
-        </select>
-      </div>
-      <div class="col-md-4 d-flex align-items-end">
-        <button class="btn btn-outline-primary" onclick="updateChart()">🔄 Courbe</button>
-      </div>
+    <div class="col-md-4">
+      <label>🌡️ Grandeur:</label>
+      <select id="grandeur" class="form-select">
+        <option value="">Sélectionnez d'abord un capteur</option>
+      </select>
     </div>
+  </div>
 
-    <canvas id="chart" style="max-width: 100%; height: 300px;"></canvas>
+  <!-- Filtres date/heure -->
+  <div class="row mb-3">
+    <div class="col-md-3">
+      <label>🕒 Début :</label>
+      <input type="datetime-local" id="start-time" class="form-control">
+    </div>
+    <div class="col-md-3">
+      <label>🕒 Fin :</label>
+      <input type="datetime-local" id="end-time" class="form-control">
+    </div>
+    <div class="col-md-3 d-flex align-items-end">
+      <button class="btn btn-outline-primary" onclick="updateChart()">🔄 Afficher la courbe</button>
+    </div>
+  </div>
 
-    <h3 class="mt-4">📋 Données Reçues (auto-refresh)</h3>
-    <table class="table table-bordered">
-        <thead class="table-light">
-            <tr>
-                <th>Horodatage</th>
-                <th>Capteur</th>
-                <th>Fabricant</th>
-                <th>Payload</th>
-                <th>Données décodées</th>
-            </tr>
-        </thead>
-        <tbody id="sensor-tbody">
-        </tbody>
-    </table>
+  <!-- Graphique -->
+  <canvas id="chart" style="max-width: 100%; height: 300px;"></canvas>
 
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Tableau -->
+  <h3 class="mt-4">📋 Données Reçues (auto-refresh)</h3>
+  <table class="table table-bordered">
+    <thead class="table-light">
+      <tr>
+        <th>Horodatage</th>
+        <th>Capteur</th>
+        <th>Fabricant</th>
+        <th>Payload</th>
+        <th>Données décodées</th>
+      </tr>
+    </thead>
+    <tbody id="sensor-tbody"></tbody>
+  </table>
+
+  <!-- Scripts -->
+  <script>
+    let chart;
+
+    async function loadData() {
+      const res = await fetch('/uplink?format=json');
+      return await res.json();
+    }
+
+    async function autoRefresh() {
+      await refreshTable();
+      setTimeout(autoRefresh, 10000);
+    }
+
+    async function refreshTable() {
+      const data = await loadData();
+      const tbody = document.getElementById('sensor-tbody');
+      tbody.innerHTML = '';
+
+      data.forEach(d => {
+        const tr = document.createElement('tr');
+        if (d.decoded?.co2?.value > 1000) tr.classList.add('alarm');
+
+        tr.innerHTML = `
+          <td>${d.timestamp || ''}</td>
+          <td>${d.deviceInfo?.deviceName || ''}</td>
+          <td>${d.decoded?.Fabricant || 'N/A'}</td>
+          <td><pre>${d.data || ''}</pre></td>
+          <td><pre>${JSON.stringify(d.decoded, null, 2)}</pre></td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    async function updateGrandeurs() {
+      const capteur = document.getElementById("capteur").value;
+      const grandeurSelect = document.getElementById("grandeur");
+      grandeurSelect.innerHTML = '';
+
+      if (!capteur || capteur === "all") {
+        grandeurSelect.innerHTML = '<option value="">Sélectionnez d\'abord un capteur</option>';
+        return;
+      }
+
+      const data = await loadData();
+      const filtered = data.filter(d => d.deviceInfo?.deviceName === capteur);
+      const grandeursSet = new Set();
+
+      filtered.forEach(d => {
+        if (d.decoded) {
+          Object.keys(d.decoded).forEach(gr => {
+            if (typeof d.decoded[gr] === 'object' && d.decoded[gr]?.value !== undefined) {
+              grandeursSet.add(gr);
+            }
+          });
+        }
+      });
+
+      if (grandeursSet.size > 0) {
+        grandeurSelect.innerHTML = '<option value="">Choisissez une grandeur</option>';
+        grandeursSet.forEach(gr => {
+          const opt = document.createElement("option");
+          opt.value = gr;
+          opt.textContent = gr;
+          grandeurSelect.appendChild(opt);
+        });
+      } else {
+        grandeurSelect.innerHTML = '<option>Aucune grandeur disponible</option>';
+      }
+    }
+
+    async function updateChart() {
+      const capteur = document.getElementById("capteur").value;
+      const grandeur = document.getElementById("grandeur").value;
+      const start = document.getElementById("start-time").value;
+      const end = document.getElementById("end-time").value;
+
+      if (!capteur || !grandeur) {
+        alert("Sélectionne un capteur et une grandeur avant d'afficher la courbe.");
+        return;
+      }
+
+      const data = await loadData();
+
+      const filtered = data.filter(d => {
+        const ts = new Date(d.timestamp);
+        const matchCapteur = (capteur === "all" || d.deviceInfo?.deviceName === capteur);
+        const hasValue = d.decoded?.[grandeur]?.value !== undefined;
+        const inTime = (!start || ts >= new Date(start)) && (!end || ts <= new Date(end));
+        return matchCapteur && hasValue && inTime;
+      });
+
+      if (filtered.length === 0) {
+        alert("Aucune donnée pour cette sélection.");
+        chart.data.labels = [];
+        chart.data.datasets[0].data = [];
+        chart.update();
+        return;
+      }
+
+      chart.data.labels = filtered.map(d => d.timestamp);
+      chart.data.datasets[0].label = grandeur;
+      chart.data.datasets[0].data = filtered.map(d => d.decoded[grandeur].value);
+      chart.update();
+    }
+
+    async function lancerBackup() {
+      const res = await fetch("/uplink?event=push", { method: "POST" });
+      const result = await res.json();
+      alert(result.status);
+    }
+
+    window.onload = async function () {
+      const ctx = document.getElementById('chart').getContext('2d');
+      chart = new Chart(ctx, {
+        type: 'line',
+        data: { labels: [], datasets: [{ label: 'Valeur', data: [], borderColor: 'blue', borderWidth: 2 }] },
+        options: { responsive: true }
+      });
+      await refreshTable();
+      autoRefresh();
+    }
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
