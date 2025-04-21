@@ -25,7 +25,7 @@
       <a class="nav-link" data-bs-toggle="tab" href="#tableau">📋 Tableau</a>
     </li>
     <li class="nav-item">
-      <a class="nav-link" data-bs-toggle="tab" href="#export">📤 Exportation</a>
+      <a class="nav-link" data-bs-toggle="tab" href="#export">📄 Exportation</a>
     </li>
   </ul>
 
@@ -68,199 +68,200 @@
 
       <canvas id="chart" style="max-width: 100%; height: 300px;"></canvas>
     </div>
+
     <!-- Onglet Tableau -->
     <div class="tab-pane fade" id="tableau">
-        <div class="card p-3">
-          <h4>📋 Données Reçues (avec pagination)</h4>
-          <table class="table table-bordered mt-2">
-            <thead class="table-light">
-              <tr>
-                <th>Horodatage</th>
-                <th>Capteur</th>
-                <th>Fabricant</th>
-                <th>Payload</th>
-                <th>Données décodées</th>
-              </tr>
-            </thead>
-            <tbody id="sensor-tbody"></tbody>
-          </table>
-          <nav>
-            <ul class="pagination" id="pagination"></ul>
-          </nav>
-        </div>
+      <div class="card p-3">
+        <h4>📋 Données Reçues (avec pagination)</h4>
+        <table class="table table-bordered mt-2">
+          <thead class="table-light">
+            <tr>
+              <th>Horodatage</th>
+              <th>Capteur</th>
+              <th>Fabricant</th>
+              <th>Payload</th>
+              <th>Données décodées</th>
+            </tr>
+          </thead>
+          <tbody id="sensor-tbody"></tbody>
+        </table>
+        <nav>
+          <ul class="pagination" id="pagination"></ul>
+        </nav>
       </div>
+    </div>
+
     <!-- Onglet Export -->
     <div class="tab-pane fade" id="export">
-        <div class="card p-3">
-          <h4>📤 Exportation & Sauvegarde</h4>
-          <div class="d-flex gap-3 flex-wrap">
-            <button class="btn btn-outline-primary" onclick="location.href='/uplink?format=json'">📄 JSON</button>
-            <button class="btn btn-outline-success" onclick="location.href='/uplink?format=csv'">⬇️ CSV</button>
-            <button class="btn btn-outline-info" onclick="lancerBackup()">💾 Sauvegarde GitHub</button>
-          </div>
+      <div class="card p-3">
+        <h4>📄 Exportation & Sauvegarde</h4>
+        <div class="d-flex gap-3 flex-wrap">
+          <button class="btn btn-outline-primary" onclick="location.href='/uplink?format=json'">📄 JSON</button>
+          <button class="btn btn-outline-success" onclick="location.href='/uplink?format=csv'">⬇️ CSV</button>
+          <button class="btn btn-outline-info" onclick="lancerBackup()">📀 Sauvegarde GitHub</button>
         </div>
       </div>
     </div>
-  
-    <script>
-      let chart, currentData = [], rowsPerPage = 10, currentPage = 1;
-  
-      async function loadData() {
-        const res = await fetch('/uplink?format=json');
-        return await res.json();
+  </div>
+
+  <script>
+    let chart, currentData = [], rowsPerPage = 10, currentPage = 1;
+
+    async function loadData() {
+      const res = await fetch('/uplink?format=json');
+      return await res.json();
+    }
+
+    async function refreshTable() {
+      currentData = await loadData();
+      renderPage(1);
+    }
+
+    function renderPage(page) {
+      const tbody = document.getElementById('sensor-tbody');
+      const pagination = document.getElementById('pagination');
+      tbody.innerHTML = '';
+      pagination.innerHTML = '';
+
+      const totalPages = Math.ceil(currentData.length / rowsPerPage);
+      currentPage = Math.min(Math.max(1, page), totalPages);
+      const start = (currentPage - 1) * rowsPerPage;
+      const end = start + rowsPerPage;
+      const visible = currentData.slice(start, end);
+
+      visible.forEach(d => {
+        const tr = document.createElement('tr');
+        if (d.decoded?.co2?.value > 1000) tr.classList.add('alarm');
+        tr.innerHTML = `
+          <td>${d.timestamp || ''}</td>
+          <td>${d.decoded?.Product_type || 'Inconnu'}</td>
+          <td>${d.decoded?.Fabricant || 'N/A'}</td>
+          <td><pre>${d.data || ''}</pre></td>
+          <td><pre>${JSON.stringify(d.decoded, null, 2)}</pre></td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      for (let i = 1; i <= totalPages; i++) {
+        const li = document.createElement('li');
+        li.className = 'page-item' + (i === currentPage ? ' active' : '');
+        li.innerHTML = `<a class="page-link" href="#">${i}</a>`;
+        li.onclick = () => renderPage(i);
+        pagination.appendChild(li);
       }
-  
-      async function refreshTable() {
-        currentData = await loadData();
-        renderPage(1);
-      }
-  
-      function renderPage(page) {
-        const tbody = document.getElementById('sensor-tbody');
-        const pagination = document.getElementById('pagination');
-        tbody.innerHTML = '';
-        pagination.innerHTML = '';
-  
-        const totalPages = Math.ceil(currentData.length / rowsPerPage);
-        currentPage = Math.min(Math.max(1, page), totalPages);
-        const start = (currentPage - 1) * rowsPerPage;
-        const end = start + rowsPerPage;
-  
-        const visible = currentData.slice(start, end);
-        visible.forEach(d => {
-          const tr = document.createElement('tr');
-          if (d.decoded?.co2?.value > 1000) tr.classList.add('alarm');
-          tr.innerHTML = `
-            <td>${d.timestamp || ''}</td>
-            <td>${d.decoded?.Product_type || 'Inconnu'}</td>
-            <td>${d.decoded?.Fabricant || 'N/A'}</td>
-            <td><pre>${d.data || ''}</pre></td>
-            <td><pre>${JSON.stringify(d.decoded, null, 2)}</pre></td>
-          `;
-          tbody.appendChild(tr);
-        });
-  
-        for (let i = 1; i <= totalPages; i++) {
-          const li = document.createElement('li');
-          li.className = 'page-item' + (i === currentPage ? ' active' : '');
-          li.innerHTML = `<a class="page-link" href="#">${i}</a>`;
-          li.onclick = () => renderPage(i);
-          pagination.appendChild(li);
+
+      document.getElementById("nb-trames").textContent = `${currentData.length} trames affichées`;
+      document.getElementById("last-update").textContent = "Dernière mise à jour : " + new Date().toLocaleString('fr-FR');
+    }
+
+    function resetFilters() {
+      document.getElementById("capteur").value = "all";
+      document.getElementById("start-time").value = "";
+      document.getElementById("end-time").value = "";
+      document.getElementById("grandeur-checkboxes").innerHTML = "";
+      chart.data.labels = [];
+      chart.data.datasets = [];
+      chart.update();
+    }
+
+    async function updateGrandeurs() {
+      const capteur = document.getElementById("capteur").value;
+      const container = document.getElementById("grandeur-checkboxes");
+      container.innerHTML = '';
+      if (capteur === "all") return;
+      const data = await loadData();
+      const filtered = data.filter(d => d.decoded?.Product_type === capteur);
+      const grandeursSet = new Set();
+
+      filtered.forEach(d => {
+        if (d.decoded) {
+          Object.entries(d.decoded).forEach(([key, val]) => {
+            if (typeof val === 'object' && 'value' in val) grandeursSet.add(key);
+          });
         }
-  
-        document.getElementById("nb-trames").textContent = `${currentData.length} trames affichées`;
-        document.getElementById("last-update").textContent = "Dernière mise à jour : " + new Date().toLocaleString('fr-FR');
+      });
+
+      grandeursSet.forEach(gr => {
+        const div = document.createElement('div');
+        div.className = "form-check";
+        div.innerHTML = `
+          <input type="checkbox" class="form-check-input" id="chk-${gr}" value="${gr}">
+          <label class="form-check-label" for="chk-${gr}">${gr}</label>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    async function updateChart() {
+      const capteur = document.getElementById("capteur").value;
+      const start = document.getElementById("start-time").value;
+      const end = document.getElementById("end-time").value;
+      const selected = Array.from(document.querySelectorAll("#grandeur-checkboxes input:checked")).map(cb => cb.value);
+      if (!capteur || selected.length === 0) {
+        alert("Sélectionne un capteur et au moins une grandeur.");
+        return;
       }
-  
-      function resetFilters() {
-        document.getElementById("capteur").value = "all";
-        document.getElementById("start-time").value = "";
-        document.getElementById("end-time").value = "";
-        document.getElementById("grandeur-checkboxes").innerHTML = "";
-        chart.data.labels = [];
-        chart.data.datasets = [];
-        chart.update();
+      const data = await loadData();
+      const filtered = data.filter(d => {
+        const ts = new Date(d.timestamp);
+        return (capteur === "all" || d.decoded?.Product_type === capteur)
+          && (!start || ts >= new Date(start))
+          && (!end || ts <= new Date(end));
+      });
+      if (filtered.length === 0) {
+        alert("Aucune donnée trouvée pour cette période.");
+        return;
       }
-  
-      async function updateGrandeurs() {
-        const capteur = document.getElementById("capteur").value;
-        const container = document.getElementById("grandeur-checkboxes");
-        container.innerHTML = '';
-  
-        if (capteur === "all") return;
-        const data = await loadData();
-        const filtered = data.filter(d => d.decoded?.Product_type === capteur);
-        const grandeursSet = new Set();
-  
-        filtered.forEach(d => {
-          if (d.decoded) {
-            Object.entries(d.decoded).forEach(([key, val]) => {
-              if (typeof val === 'object' && 'value' in val) grandeursSet.add(key);
-            });
-          }
-        });
-  
-        grandeursSet.forEach(gr => {
-          const div = document.createElement('div');
-          div.className = "form-check";
-          div.innerHTML = `
-            <input type="checkbox" class="form-check-input" id="chk-${gr}" value="${gr}">
-            <label class="form-check-label" for="chk-${gr}">${gr}</label>
-          `;
-          container.appendChild(div);
-        });
-      }
-  
-      async function updateChart() {
-        const capteur = document.getElementById("capteur").value;
-        const start = document.getElementById("start-time").value;
-        const end = document.getElementById("end-time").value;
-        const selected = Array.from(document.querySelectorAll("#grandeur-checkboxes input:checked")).map(cb => cb.value);
-  
-        if (!capteur || selected.length === 0) {
-          alert("Sélectionne un capteur et au moins une grandeur.");
-          return;
-        }
-  
-        const data = await loadData();
-        const filtered = data.filter(d => {
-          const ts = new Date(d.timestamp);
-          return (capteur === "all" || d.decoded?.Product_type === capteur)
-            && (!start || ts >= new Date(start))
-            && (!end || ts <= new Date(end));
-        });
-  
-        const labels = filtered.map(d => d.timestamp);
-        const datasets = selected.map((g, i) => ({
-          label: g,
-          data: filtered.map(d => d.decoded?.[g]?.value ?? null),
-          borderColor: getColor(i),
-          fill: false,
-          tension: 0.3
-        }));
-  
-        chart.data.labels = labels;
-        chart.data.datasets = datasets;
-        chart.update();
-  
-        document.getElementById("nb-trames").textContent = `${filtered.length} trames affichées`;
-        document.getElementById("last-update").textContent = "Dernière mise à jour : " + new Date().toLocaleString('fr-FR');
-      }
-  
-      function getColor(i) {
-        const colors = ['#007bff', '#dc3545', '#28a745', '#ffc107', '#17a2b8', '#6f42c1', '#fd7e14'];
-        return colors[i % colors.length];
-      }
-  
-      async function lancerBackup() {
-        const res = await fetch("/uplink?event=push", { method: "POST" });
-        const result = await res.json();
-        alert(result.status);
-      }
-  
-      window.onload = async function () {
-        const ctx = document.getElementById('chart').getContext('2d');
-        chart = new Chart(ctx, {
-          type: 'line',
-          data: { labels: [], datasets: [] },
-          options: {
-            responsive: true,
-            interaction: { mode: 'index', intersect: false },
-            plugins: {
-              tooltip: {
-                callbacks: {
-                  label: ctx => `${ctx.dataset.label}: ${ctx.formattedValue}`
-                }
+      const labels = filtered.map(d => d.timestamp);
+      const datasets = selected.map((g, i) => ({
+        label: g,
+        data: filtered.map(d => {
+          const val = d.decoded?.[g]?.value;
+          return typeof val === 'number' ? val : null;
+        }),
+        borderColor: getColor(i),
+        fill: false,
+        tension: 0.3
+      }));
+      chart.data.labels = labels;
+      chart.data.datasets = datasets;
+      chart.update();
+      document.getElementById("nb-trames").textContent = `${filtered.length} trames affichées`;
+      document.getElementById("last-update").textContent = "Dernière mise à jour : " + new Date().toLocaleString('fr-FR');
+    }
+
+    function getColor(i) {
+      const colors = ['#007bff', '#dc3545', '#28a745', '#ffc107', '#17a2b8', '#6f42c1', '#fd7e14'];
+      return colors[i % colors.length];
+    }
+
+    async function lancerBackup() {
+      const res = await fetch("/uplink?event=push", { method: "POST" });
+      const result = await res.json();
+      alert(result.status);
+    }
+
+    window.onload = async function () {
+      const ctx = document.getElementById('chart').getContext('2d');
+      chart = new Chart(ctx, {
+        type: 'line',
+        data: { labels: [], datasets: [] },
+        options: {
+          responsive: true,
+          interaction: { mode: 'index', intersect: false },
+          plugins: {
+            tooltip: {
+              callbacks: {
+                label: ctx => `${ctx.dataset.label}: ${ctx.formattedValue}`
               }
             }
           }
-        });
-  
-        await refreshTable();
-        setInterval(refreshTable, 10000);
-      };
-    </script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
-  </body>
-  </html>
-  
+        }
+      });
+      await refreshTable();
+      setInterval(refreshTable, 10000);
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
