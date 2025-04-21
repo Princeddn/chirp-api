@@ -4,6 +4,7 @@ import json, os, csv, uuid, time
 from github_backup_push import push_to_github
 import requests
 from Decoder import BaseDecoder, NexelecDecoder, WattecoDecoder
+from pytz import timezone  # Pour la gestion du fuseau horaire
 
 app = Flask(__name__)
 DB_FILE = "database.json"
@@ -133,8 +134,8 @@ def uplink():
             return jsonify({"status": f"ignored event: {event}"}), 200
         data = request.json
         decoded = decode_lorawan_data(data.get("data", ""))
-        data["timestamp"] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        data["decoded"] = decoded
+        paris_tz = timezone('Europe/Paris')
+        data["timestamp"] = datetime.now(paris_tz).strftime('%Y-%m-%d %H:%M:%S %Z')        data["decoded"] = decoded
         data["id"] = str(uuid.uuid4())
         print("📡 Donnée reçue + décodée :", data)
         save_data([data])
