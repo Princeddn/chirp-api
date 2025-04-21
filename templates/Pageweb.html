@@ -16,7 +16,6 @@
 <body class="container">
   <h1 class="mb-4">📡 Dashboard Capteurs LoRa</h1>
 
-  <!-- Onglets navigation -->
   <ul class="nav nav-tabs mb-4" id="myTabs">
     <li class="nav-item">
       <a class="nav-link active" data-bs-toggle="tab" href="#graphe">📊 Graphe</a>
@@ -30,7 +29,6 @@
   </ul>
 
   <div class="tab-content">
-    <!-- Onglet Graphe -->
     <div class="tab-pane fade show active" id="graphe">
       <div class="mb-3 d-flex flex-wrap align-items-center gap-3">
         <span class="badge bg-secondary" id="nb-trames">0 trames affichées</span>
@@ -39,7 +37,7 @@
 
       <div class="card p-3 mb-3">
         <div class="row">
-          <div class="col-md-4">
+          <div class="col-md-3">
             <label>🔧 Capteur :</label>
             <select id="capteur" class="form-select" onchange="updateGrandeurs()">
               <option value="all">Tous</option>
@@ -48,7 +46,7 @@
               {% endfor %}
             </select>
           </div>
-          <div class="col-md-4">
+          <div class="col-md-3">
             <label>📈 Grandeurs :</label>
             <div id="grandeur-checkboxes" class="form-check d-flex flex-wrap gap-2"></div>
           </div>
@@ -58,18 +56,24 @@
               <input type="datetime-local" id="start-time" class="form-control me-2">
               <input type="datetime-local" id="end-time" class="form-control">
             </div>
+            <div class="d-flex mt-2 gap-2">
+              <button class="btn btn-outline-secondary btn-sm" onclick="setToday()">Aujourd'hui</button>
+              <button class="btn btn-outline-secondary btn-sm" onclick="clearDates()">Effacer dates</button>
+            </div>
+          </div>
+          <div class="col-md-2 d-flex align-items-end">
+            <button class="btn btn-outline-primary w-100" onclick="updateChart()">🔄 Afficher la courbe</button>
           </div>
         </div>
         <div class="mt-3 d-flex justify-content-end gap-2">
-          <button class="btn btn-outline-primary" onclick="updateChart()">🔄 Afficher la courbe</button>
           <button class="btn btn-outline-danger" onclick="resetFilters()">♻️ Réinitialiser</button>
+          <button class="btn btn-outline-info" onclick="exportChart()">📷 Exporter le graphique</button>
         </div>
       </div>
 
       <canvas id="chart" style="max-width: 100%; height: 300px;"></canvas>
     </div>
 
-    <!-- Onglet Tableau -->
     <div class="tab-pane fade" id="tableau">
       <div class="card p-3">
         <h4>📋 Données Reçues (avec pagination)</h4>
@@ -91,7 +95,6 @@
       </div>
     </div>
 
-    <!-- Onglet Export -->
     <div class="tab-pane fade" id="export">
       <div class="card p-3">
         <h4>📄 Exportation & Sauvegarde</h4>
@@ -112,6 +115,82 @@
       return await res.json();
     }
 
+    function clearDates() {
+      document.getElementById("start-time").value = "";
+      document.getElementById("end-time").value = "";
+    }
+
+    function setToday() {
+      const now = new Date();
+      const yyyy = now.getFullYear();
+      const mm = String(now.getMonth() + 1).padStart(2, '0');
+      const dd = String(now.getDate()).padStart(2, '0');
+      document.getElementById("start-time").value = `${yyyy}-${mm}-${dd}T00:00`;
+      document.getElementById("end-time").value = `${yyyy}-${mm}-${dd}T23:59`;
+    }
+
+    function exportChart() {
+      const link = document.createElement('a');
+      link.download = "graphique-lora.png";
+      link.href = chart.toBase64Image();
+      link.click();
+    }
+
+    async function updateChart() {
+      const capteur = document.getElementById("capteur").value;
+      const start = document.getElementById("start-time").value;
+      const end = document.getElementById("end-time").value;
+      const selected = Array.from(document.querySelectorAll("#grandeur-checkboxes input:checked")).map(cb => cb.value);
+
+      if (!capteur || selected.length === 0) {
+        alert("Sélectionne un capteur et au moins une grandeur.");
+        return;
+      }
+
+      const data = await loadData();
+
+      const filtered = data.filter(d => {
+        const ts = new Date(d.timestamp);
+        const validTS = !isNaN(ts);
+        const tsOk = (!start || ts >= new Date(start)) && (!end || ts <= new Date(end));
+        const capteurOk = (capteur === "all" || d.decoded?.Product_type === capteur);
+        return validTS && tsOk && capteurOk;
+      });
+
+      if (filtered.length === 0) {
+        alert("Aucune donnée trouvée pour cette période ou ce capteur.");
+        return;
+      }
+
+      const labels = filtered.map(d => d.timestamp);
+      const datasets = selected.map((g, i) => ({
+        label: g,
+        data: filtered.map(d => {
+          const val = d.decoded?.[g]?.value;
+          return typeof val === 'number' ? val : null;
+        }),
+        borderColor: getColor(i),
+        fill: false,
+        tension: 0.3
+      }));
+
+      chart.data.labels = labels;
+      chart.data.datasets = datasets;
+      chart.update();
+
+      document.getElementById("nb-trames").textContent = `${filtered.length} trames affichées`;
+      document.getElementById("last-update").textContent = "Dernière mise à jour : " + new Date().toLocaleString('fr-FR');
+    }
+
+    function resetFilters() {
+      document.getElementById("capteur").value = "all";
+      clearDates();
+      document.getElementById("grandeur-checkboxes").innerHTML = "";
+      chart.data.labels = [];
+      chart.data.datasets = [];
+      chart.update();
+    }
+
     async function refreshTable() {
       currentData = await loadData();
       renderPage(1);
@@ -122,7 +201,6 @@
       const pagination = document.getElementById('pagination');
       tbody.innerHTML = '';
       pagination.innerHTML = '';
-
       const totalPages = Math.ceil(currentData.length / rowsPerPage);
       currentPage = Math.min(Math.max(1, page), totalPages);
       const start = (currentPage - 1) * rowsPerPage;
@@ -154,16 +232,6 @@
       document.getElementById("last-update").textContent = "Dernière mise à jour : " + new Date().toLocaleString('fr-FR');
     }
 
-    function resetFilters() {
-      document.getElementById("capteur").value = "all";
-      document.getElementById("start-time").value = "";
-      document.getElementById("end-time").value = "";
-      document.getElementById("grandeur-checkboxes").innerHTML = "";
-      chart.data.labels = [];
-      chart.data.datasets = [];
-      chart.update();
-    }
-
     async function updateGrandeurs() {
       const capteur = document.getElementById("capteur").value;
       const container = document.getElementById("grandeur-checkboxes");
@@ -190,44 +258,6 @@
         `;
         container.appendChild(div);
       });
-    }
-
-    async function updateChart() {
-      const capteur = document.getElementById("capteur").value;
-      const start = document.getElementById("start-time").value;
-      const end = document.getElementById("end-time").value;
-      const selected = Array.from(document.querySelectorAll("#grandeur-checkboxes input:checked")).map(cb => cb.value);
-      if (!capteur || selected.length === 0) {
-        alert("Sélectionne un capteur et au moins une grandeur.");
-        return;
-      }
-      const data = await loadData();
-      const filtered = data.filter(d => {
-        const ts = new Date(d.timestamp);
-        return (capteur === "all" || d.decoded?.Product_type === capteur)
-          && (!start || ts >= new Date(start))
-          && (!end || ts <= new Date(end));
-      });
-      if (filtered.length === 0) {
-        alert("Aucune donnée trouvée pour cette période.");
-        return;
-      }
-      const labels = filtered.map(d => d.timestamp);
-      const datasets = selected.map((g, i) => ({
-        label: g,
-        data: filtered.map(d => {
-          const val = d.decoded?.[g]?.value;
-          return typeof val === 'number' ? val : null;
-        }),
-        borderColor: getColor(i),
-        fill: false,
-        tension: 0.3
-      }));
-      chart.data.labels = labels;
-      chart.data.datasets = datasets;
-      chart.update();
-      document.getElementById("nb-trames").textContent = `${filtered.length} trames affichées`;
-      document.getElementById("last-update").textContent = "Dernière mise à jour : " + new Date().toLocaleString('fr-FR');
     }
 
     function getColor(i) {
