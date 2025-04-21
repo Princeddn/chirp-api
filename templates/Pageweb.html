@@ -137,50 +137,65 @@
     }
 
     async function updateChart() {
-      const capteur = document.getElementById("capteur").value;
-      const start = document.getElementById("start-time").value;
-      const end = document.getElementById("end-time").value;
-      const selected = Array.from(document.querySelectorAll("#grandeur-checkboxes input:checked")).map(cb => cb.value);
+        const capteur = document.getElementById("capteur").value;
+        const startInput = document.getElementById("start-time").value;
+        const endInput = document.getElementById("end-time").value;
+        const selected = Array.from(document.querySelectorAll("#grandeur-checkboxes input:checked"))
+                                .map(cb => cb.value);
 
-      if (!capteur || selected.length === 0) {
-        alert("Sélectionne un capteur et au moins une grandeur.");
-        return;
-      }
+        // Vérification des champs requis
+        if (!capteur || selected.length === 0) {
+            alert("Sélectionne un capteur et au moins une grandeur.");
+            return;
+        }
 
-      const data = await loadData();
+        // Chargement des données
+        const data = await loadData();
 
-      const filtered = data.filter(d => {
-        const ts = new Date(d.timestamp);
-        const validTS = !isNaN(ts);
-        const tsOk = (!start || ts >= new Date(start)) && (!end || ts <= new Date(end));
-        const capteurOk = (capteur === "all" || d.decoded?.Product_type === capteur);
-        return validTS && tsOk && capteurOk;
-      });
+        // Filtrage selon la période et le capteur sélectionné
+        const filtered = data.filter(d => {
+            if (!d.timestamp) return false;
+            const ts = new Date(d.timestamp); // format ISO ou UTC
+            const startDate = startInput ? new Date(startInput) : null;
+            const endDate = endInput ? new Date(endInput) : null;
 
-      if (filtered.length === 0) {
-        alert("Aucune donnée trouvée pour cette période ou ce capteur.");
-        return;
-      }
+            if (isNaN(ts)) return false;
 
-      const labels = filtered.map(d => d.timestamp);
-      const datasets = selected.map((g, i) => ({
-        label: g,
-        data: filtered.map(d => {
-          const val = d.decoded?.[g]?.value;
-          return typeof val === 'number' ? val : null;
-        }),
-        borderColor: getColor(i),
-        fill: false,
-        tension: 0.3
-      }));
+            const tsOK = (!startDate || ts >= startDate) && (!endDate || ts <= endDate);
+            const capteurOK = (capteur === "all" || d.decoded?.Product_type === capteur);
 
-      chart.data.labels = labels;
-      chart.data.datasets = datasets;
-      chart.update();
+            return tsOK && capteurOK;
+        });
 
-      document.getElementById("nb-trames").textContent = `${filtered.length} trames affichées`;
-      document.getElementById("last-update").textContent = "Dernière mise à jour : " + new Date().toLocaleString('fr-FR');
-    }
+        // Si aucun résultat, message utilisateur
+        if (filtered.length === 0) {
+            alert("Aucune donnée trouvée pour cette période ou ce capteur.");
+            return;
+        }
+
+        // Préparation des données pour Chart.js
+        const labels = filtered.map(d => d.timestamp);
+        const datasets = selected.map((g, i) => ({
+            label: g,
+            data: filtered.map(d => {
+            const val = d.decoded?.[g]?.value;
+            return typeof val === 'number' ? val : null;
+            }),
+            borderColor: getColor(i),
+            fill: false,
+            tension: 0.3
+        }));
+
+        // Mise à jour du graphique
+        chart.data.labels = labels;
+        chart.data.datasets = datasets;
+        chart.update();
+
+        // Mise à jour de l'interface
+        document.getElementById("nb-trames").textContent = `${filtered.length} / ${data.length} trames affichées`;
+        document.getElementById("last-update").textContent = "Dernière mise à jour : " + new Date().toLocaleString('fr-FR');
+}
+
 
     function resetFilters() {
       document.getElementById("capteur").value = "all";
