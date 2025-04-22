@@ -192,9 +192,14 @@
       const yyyy = now.getFullYear();
       const mm = String(now.getMonth() + 1).padStart(2, '0');
       const dd = String(now.getDate()).padStart(2, '0');
-      document.getElementById("start-time").value = `${yyyy}-${mm}-${dd}T00:00`;
-      document.getElementById("end-time").value = `${yyyy}-${mm}-${dd}T23:59`;
+
+      const start = `${yyyy}-${mm}-${dd}T00:00`;
+      const end = `${yyyy}-${mm}-${dd}T23:59`;
+
+      document.getElementById("start-time").value = start;
+      document.getElementById("end-time").value = end;
     }
+
 
     function exportChart() {
       const link = document.createElement('a');
