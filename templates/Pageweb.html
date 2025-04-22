@@ -52,8 +52,10 @@
               <input type="datetime-local" id="start-time" class="form-control me-2">
               <input type="datetime-local" id="end-time" class="form-control">
             </div>
-            <div class="d-flex mt-2 gap-2">
+            <div class="d-flex mt-2 flex-wrap gap-2">
               <button class="btn btn-outline-secondary btn-sm" onclick="setToday()">Aujourd'hui</button>
+              <button class="btn btn-outline-secondary btn-sm" onclick="setYesterday()">Hier</button>
+              <button class="btn btn-outline-secondary btn-sm" onclick="setLast7Days()">7 derniers jours</button>
               <button class="btn btn-outline-secondary btn-sm" onclick="clearDates()">Effacer dates</button>
             </div>
           </div>
@@ -200,6 +202,27 @@
       document.getElementById("end-time").value = end;
     }
 
+    // Hier : de 00:00 à 23:59:59 de la veille
+    function setYesterday() {
+      const now = new Date();
+      const yesterday = new Date(now);
+      yesterday.setDate(now.getDate() - 1);
+      const start = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate(), 0, 0, 0);
+      const end = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate(), 23, 59, 59);
+      document.getElementById("start-time").value = formatInputDate(start);
+      document.getElementById("end-time").value = formatInputDate(end);
+    }
+
+    // 7 derniers jours : du jour -6 à aujourd'hui inclus
+    function setLast7Days() {
+      const now = new Date();
+      const start = new Date(now);
+      start.setDate(now.getDate() - 6);
+      start.setHours(0, 0, 0, 0);
+      const end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+      document.getElementById("start-time").value = formatInputDate(start);
+      document.getElementById("end-time").value = formatInputDate(end);
+    }
 
     function exportChart() {
       const link = document.createElement('a');
