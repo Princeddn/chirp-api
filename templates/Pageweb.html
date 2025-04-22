@@ -217,26 +217,24 @@
       console.log("Fin   :", end, "→", new Date(end).toLocaleString("fr-FR"));
     }
 
+// Hier : 00:00 → 23:59:59 de la veille
     function setYesterday() {
-      const now = new Date();
-      const yesterday = new Date(now);
-      yesterday.setDate(now.getDate() - 1);
-      const start = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate(), 0, 0, 0);
-      const end = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate(), 23, 59, 59);
+      const now = new Date(), y = new Date(now);
+      y.setDate(now.getDate()-1);
+      const start = new Date(y.getFullYear(), y.getMonth(), y.getDate(), 0,0,0),
+            end   = new Date(y.getFullYear(), y.getMonth(), y.getDate(),23,59,59);
       document.getElementById("start-time").value = formatInputDate(start);
-      document.getElementById("end-time").value = formatInputDate(end);
+      document.getElementById("end-time").  value = formatInputDate(end);
     }
 
+    // 7 derniers jours : du jour‑6 (00:00) à aujourd’hui (23:59:59)
     function setLast7Days() {
-      const now = new Date();
-      const start = new Date(now);
-      start.setDate(now.getDate() - 6);
-      start.setHours(0, 0, 0, 0);
-      const end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+      const now = new Date(),
+            start = new Date(now.getFullYear(),now.getMonth(),now.getDate()-6,0,0,0),
+            end   = new Date(now.getFullYear(),now.getMonth(),now.getDate(),23,59,59);
       document.getElementById("start-time").value = formatInputDate(start);
-      document.getElementById("end-time").value = formatInputDate(end);
+      document.getElementById("end-time").  value = formatInputDate(end);
     }
-
     function exportChart() {
       const link = document.createElement('a');
       link.download = "graphique-lora.png";
