@@ -57,6 +57,7 @@
               <button class="btn btn-outline-secondary btn-sm" onclick="setYesterday()">Hier</button>
               <button class="btn btn-outline-secondary btn-sm" onclick="setLast7Days()">7 derniers jours</button>
               <button class="btn btn-outline-secondary btn-sm" onclick="clearDates()">Effacer dates</button>
+              <button onclick="debugDates()">Vérifier les dates</button>
             </div>
           </div>
           <div class="col-md-2 d-flex align-items-end">
@@ -131,6 +132,16 @@
       return await res.json();
     }
 
+
+    function safeDateLabel(str) {
+      // Corrige les dates comme "2025-04-21 05:08:27 CEST"
+      const cleaned = str.replace(/( CEST| CET| UTC| GMT.*)$/, '').replace(' ', 'T');
+      const date = new Date(cleaned);
+      return isNaN(date.getTime()) ? "Date invalide" : date.toLocaleString("fr-FR", { hour12: false });
+    }
+
+
+
     async function updateChart() {
       const capteur = document.getElementById("capteur").value;
       const startInput = document.getElementById("start-time").value;
@@ -161,7 +172,7 @@
         return;
       }
 
-      const labels = filtered.map(d => d.timestamp);
+      const labels = filtered.map(d => safeDateLabel(d.timestamp));
       const datasets = selected.map((g, i) => ({
         label: g,
         data: filtered.map(d => {
@@ -199,6 +210,14 @@
       document.getElementById("end-time").value = end;
     }
 
+    function debugDates() {
+      const start = document.getElementById("start-time").value;
+      const end = document.getElementById("end-time").value;
+      console.log("Heure locale sélectionnée");
+      console.log("Début :", start, "→", new Date(start).toLocaleString("fr-FR"));
+      console.log("Fin   :", end, "→", new Date(end).toLocaleString("fr-FR"));
+    }
+
     function setYesterday() {
       const now = new Date();
       const yesterday = new Date(now);
@@ -225,6 +244,8 @@
       link.href = chart.toBase64Image();
       link.click();
     }
+
+
 
     function resetFilters() {
       document.getElementById("capteur").value = "all";
