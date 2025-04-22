@@ -57,6 +57,7 @@
               <button class="btn btn-outline-secondary btn-sm" onclick="setYesterday()">Hier</button>
               <button class="btn btn-outline-secondary btn-sm" onclick="setLast7Days()">7 derniers jours</button>
               <button class="btn btn-outline-secondary btn-sm" onclick="clearDates()">Effacer dates</button>
+              <button onclick="debugDates()">Vérifier les dates</button>
             </div>
           </div>
           <div class="col-md-2 d-flex align-items-end">
@@ -108,10 +109,7 @@
     let chart, currentData = [], rowsPerPage = 10, currentPage = 1;
 
     function toUTCDateFromLocalInput(dateStr) {
-      if (!dateStr) return null;
-      const localDate = new Date(dateStr);
-      const utcTimestamp = localDate.getTime() + (localDate.getTimezoneOffset() * 60000);
-      return new Date(utcTimestamp);
+      return dateStr ? new Date(dateStr) : null;
     }
 
     function parseFlexibleDate(input) {
@@ -164,7 +162,7 @@
         return;
       }
 
-      const labels = filtered.map(d => d.timestamp);
+      const labels = filtered.map(d => new Date(d.timestamp).toLocaleString("fr-FR", { hour12: false }));
       const datasets = selected.map((g, i) => ({
         label: g,
         data: filtered.map(d => {
@@ -202,7 +200,14 @@
       document.getElementById("end-time").value = end;
     }
 
-    // Hier : de 00:00 à 23:59:59 de la veille
+    function debugDates() {
+      const start = document.getElementById("start-time").value;
+      const end = document.getElementById("end-time").value;
+      console.log("Heure locale sélectionnée");
+      console.log("Début :", start, "→", new Date(start).toLocaleString("fr-FR"));
+      console.log("Fin   :", end, "→", new Date(end).toLocaleString("fr-FR"));
+    }
+
     function setYesterday() {
       const now = new Date();
       const yesterday = new Date(now);
@@ -213,7 +218,6 @@
       document.getElementById("end-time").value = formatInputDate(end);
     }
 
-    // 7 derniers jours : du jour -6 à aujourd'hui inclus
     function setLast7Days() {
       const now = new Date();
       const start = new Date(now);
