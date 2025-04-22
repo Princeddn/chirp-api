@@ -161,12 +161,14 @@ def uplink():
         csv_file = "export.csv"
         with open(csv_file, "w", newline='') as f:
             writer = csv.writer(f)
-            writer.writerow(["timestamp", "Product_type", "Fabricant", "data", "decoded"])
+            writer.writerow(["timestamp", "Nom du capteur", "Product_type", "Fabricant", "data", "decoded"])
             for row in rows:
                 decoded = row.get("decoded", {})
                 product_type = decoded.get("Product_type", "Inconnu")
+                device_name = row.get("deviceInfo", {}).get("deviceName", "Inconnu")
                 writer.writerow([
                     row.get("timestamp"),
+                    device_name,
                     product_type,
                     decoded.get("Fabricant", "N/A"),
                     row.get("data"),
@@ -175,7 +177,9 @@ def uplink():
 
         return send_file(csv_file, as_attachment=True)
 
-    capteurs = sorted({r.get("decoded", {}).get("Product_type") for r in rows if "Product_type" in r.get("decoded", {})})
+    capteurs = sorted({r.get("deviceInfo", {}).get("deviceName", "Inconnu") for r in rows if "deviceInfo" in r})
+
+    # On récupère toutes les grandeurs présentes dans les données décodées
     grandeurs = set()
     for r in rows:
         decoded = r.get("decoded", {})
@@ -183,6 +187,7 @@ def uplink():
             grandeurs.update(decoded.keys())
 
     return render_template("Pageweb.html", rows=rows, capteurs=capteurs, grandeurs=sorted(grandeurs))
+
 
 @app.route('/trame/<id>')
 def detail_trame(id):
