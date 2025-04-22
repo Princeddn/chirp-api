@@ -34,7 +34,7 @@
       <div class="card p-3 mb-3">
         <div class="row">
           <div class="col-md-3">
-            <label>🔧 Capteur :</label>
+            <label>🔧 Nom du capteur :</label>
             <select id="capteur" class="form-select" onchange="updateGrandeurs()">
               <option value="all">Tous</option>
               {% for c in capteurs %}
@@ -77,7 +77,8 @@
           <thead class="table-light">
             <tr>
               <th>Horodatage</th>
-              <th>Capteur</th>
+              <th>Nom du Capteur</th>
+              <th>Type</th>
               <th>Fabricant</th>
               <th>Payload</th>
               <th>Données décodées</th>
@@ -152,7 +153,7 @@
         if (!ts) return false;
 
         const tsOK = (!startDate || ts >= startDate) && (!endDate || ts <= endDate);
-        const capteurOK = (capteur === "all" || d.decoded?.Product_type === capteur);
+        const capteurOK = (capteur === "all" || d.deviceInfo?.deviceName === capteur);
         return tsOK && capteurOK;
       });
 
@@ -232,6 +233,7 @@
         if (d.decoded?.co2?.value > 1000) tr.classList.add('alarm');
         tr.innerHTML = `
           <td>${d.timestamp || ''}</td>
+          <td>${d.deviceInfo?.deviceName || 'Inconnu'}</td>
           <td>${d.decoded?.Product_type || 'Inconnu'}</td>
           <td>${d.decoded?.Fabricant || 'N/A'}</td>
           <td><pre>${d.data || ''}</pre></td>
@@ -258,7 +260,7 @@
       container.innerHTML = '';
       if (capteur === "all") return;
       const data = await loadData();
-      const filtered = data.filter(d => d.decoded?.Product_type === capteur);
+      const filtered = data.filter(d => d.deviceInfo?.deviceName === capteur);
       const grandeursSet = new Set();
 
       filtered.forEach(d => {
