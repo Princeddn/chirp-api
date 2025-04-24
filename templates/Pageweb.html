@@ -72,7 +72,7 @@
 
     <div class="tab-pane fade" id="tableau">
       <div class="card p-3">
-        <h4>📋 Données Reçues (avec pagination)</h4>
+        <h4>📋 Données Reçues </h4>
         <table class="table table-bordered mt-2">
           <thead class="table-light">
             <tr>
@@ -140,28 +140,24 @@
 
 
     async function updateChart() {
-      const capteur = document.getElementById("capteur").value;
-      const startInput = document.getElementById("start-time").value;
-      const endInput = document.getElementById("end-time").value;
-      const selected = Array.from(document.querySelectorAll("#grandeur-checkboxes input:checked")).map(cb => cb.value);
+      const capteur   = document.getElementById("capteur").value;
+      const startDate = toUTCDateFromLocalInput(document.getElementById("start-time").value);
+      const endDate   = toUTCDateFromLocalInput(document.getElementById("end-time").value);
+      const selected  = Array.from(document.querySelectorAll("#grandeur-checkboxes input:checked"))
+                              .map(cb => cb.value);
 
       if (!capteur || selected.length === 0) {
         showMessage("Sélectionne un capteur et au moins une grandeur.");
         return;
       }
 
-      const data = await loadData();
-      const startDate = toUTCDateFromLocalInput(startInput);
-      const endDate = toUTCDateFromLocalInput(endInput);
-
+      const data     = await loadData();
       const filtered = data.filter(d => {
-        if (!d.timestamp) return false;
         const ts = parseFlexibleDate(d.timestamp);
         if (!ts) return false;
-
-        const tsOK = (!startDate || ts >= startDate) && (!endDate || ts <= endDate);
-        const capteurOK = (capteur === "all" || d.deviceInfo?.deviceName === capteur);
-        return tsOK && capteurOK;
+        const okDate = (!startDate || ts >= startDate) && (!endDate || ts <= endDate);
+        const okCap  = capteur === "all" || d.deviceInfo?.deviceName === capteur;
+        return okDate && okCap;
       });
 
       if (filtered.length === 0) {
@@ -169,24 +165,38 @@
         return;
       }
 
-      const labels = filtered.map(d => safeDateLabel(d.timestamp));
-      const datasets = selected.map((g, i) => ({
-        label: g,
-        data: filtered.map(d => {
-          const val = d.decoded?.[g]?.value;
-          return typeof val === 'number' ? val : null;
-        }),
-        borderColor: getColor(i),
-        fill: false,
-        tension: 0.3
-      }));
+      const datasets = selected.map((g, i) => {
+        const pts = filtered
+          .map(d => {
+            const ts  = parseFlexibleDate(d.timestamp);
+            const raw = d.decoded?.[g];
+            const y   = (raw && typeof raw === 'object') ? raw.value : raw;
+            return (ts && typeof y === 'number') ? { x: ts, y } : null;
+          })
+          .filter(p => p !== null)
+          .sort((a, b) => a.x - b.x);
 
-      chart.data.labels = labels;
+        const values = pts.map(p => p.y);
+        const min    = Math.min(...values);
+        const max    = Math.max(...values);
+        const avg    = values.reduce((sum, v) => sum + v, 0) / values.length;
+
+        return {
+          label: `${g} (min : ${min.toFixed(2)}, moy : ${avg.toFixed(2)}, max : ${max.toFixed(2)})`,
+          data: pts,
+          borderColor: getColor(i),
+          fill: false,
+          tension: 0.3
+        };
+      });
+
       chart.data.datasets = datasets;
       chart.update();
 
-      document.getElementById("nb-trames").textContent = `${filtered.length} / ${data.length} trames affichées`;
-      document.getElementById("last-update").textContent = "Dernière mise à jour : " + new Date().toLocaleString('fr-FR');
+      document.getElementById("nb-trames").textContent =
+        `${filtered.length} / ${data.length} trames affichées`;
+      document.getElementById("last-update").textContent =
+        "Dernière mise à jour : " + new Date().toLocaleString('fr-FR');
     }
 
     function clearDates() {
@@ -226,8 +236,9 @@
     }
 
     async function refreshTable() {
+      const prevPage = currentPage;
       currentData = await loadData();
-      renderPage(1);
+      renderPage(prevPage);
     }
 
     function renderPage(page) {
@@ -328,14 +339,25 @@
       const ctx = document.getElementById('chart').getContext('2d');
       chart = new Chart(ctx, {
         type: 'line',
-        data: { labels: [], datasets: [] },
+        data: { datasets: [] },
         options: {
           responsive: true,
           interaction: { mode: 'index', intersect: false },
+          scales: {
+            x: {
+              type: 'time',
+              time: {
+                parser: val => parseFlexibleDate(val),
+                tooltipFormat: 'DD/MM/YYYY HH:mm',
+                displayFormats: { hour: 'HH:mm', minute: 'HH:mm' }
+              }
+            },
+            y: { beginAtZero: false }
+          },
           plugins: {
             tooltip: {
               callbacks: {
-                label: ctx => `${ctx.dataset.label}: ${ctx.formattedValue}`
+                label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y}`
               }
             }
           }
