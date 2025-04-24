@@ -175,7 +175,7 @@
             const y   = (raw && typeof raw === 'object') ? raw.value : raw;
             return (ts && typeof y === 'number') ? { x: ts, y } : null;
           })
-          .filter(p => p !== null)
+          .filter(p => p !== null && p.y >= 0)
           .sort((a, b) => a.x - b.x);
 
         const values = pts.map(p => p.y);
