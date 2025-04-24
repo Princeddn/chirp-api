@@ -359,7 +359,8 @@
             plugins: {
               tooltip: {
                 callbacks: {
-                  label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y}`
+                  title: items => items[0].label,
+                  label: context => context.parsed.y
                 }
               }
             }
