@@ -168,7 +168,7 @@
       }
 
       const datasets = selected.map((g, i) => {
-        const pts = filtered
+        const rawPts = filtered
           .map(d => {
             const ts  = parseFlexibleDate(d.timestamp);
             const raw = d.decoded?.[g];
@@ -177,6 +177,12 @@
           })
           .filter(p => p !== null && p.y >= 0)
           .sort((a, b) => a.x - b.x);
+
+        const maxDelta = 2000;
+        const pts = rawPts.filter((p,i, arr) =>{ 
+          if (i===0) return true;
+          return Math.abs(p.y - arr[i-1].y) <= maxDelta;
+        });
 
         const values = pts.map(p => p.y);
         const min    = Math.min(...values);
