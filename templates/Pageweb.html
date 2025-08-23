@@ -39,9 +39,6 @@
             <label>🔧 Nom du capteur :</label>
             <select id="capteur" class="form-select" onchange="updateGrandeurs()">
               <option value="all">Tous</option>
-              {% for c in capteurs %}
-              <option value="{{c}}">{{c}}</option>
-              {% endfor %}
             </select>
           </div>
           <div class="col-md-3">
@@ -96,9 +93,9 @@
       <div class="card p-3">
         <h4>📤 Exportation & Sauvegarde</h4>
         <div class="d-flex gap-3 flex-wrap">
-          <button class="btn btn-outline-primary" onclick="location.href='/uplink?format=json'">📄 JSON</button>
-          <button class="btn btn-outline-success" onclick="location.href='/uplink?format=csv'">⬇️ CSV</button>
-          <button class="btn btn-outline-info" onclick="lancerBackup()">💾 Sauvegarde GitHub</button>
+          <button class="btn btn-outline-primary" onclick="location.href='database.json'">📄 JSON</button>
+          <button class="btn btn-outline-success" onclick="exportCSV()">⬇️ CSV</button>
+          <button class="btn btn-outline-info" disabled title="Indisponible sur GitHub Pages">💾 Sauvegarde GitHub</button>
         </div>
       </div>
     </div>
@@ -127,7 +124,7 @@
     }
 
     async function loadData() {
-      const res = await fetch('/uplink?format=json');
+      const res = await fetch('database.json', { cache: 'no-store' });
       return await res.json();
     }
 
@@ -232,7 +229,19 @@
       link.click();
     }
 
-
+    function populateCapteursFromCurrentData() {
+      const select = document.getElementById("capteur");
+      const seen = new Set();
+      (currentData || []).forEach(d => {
+        const name = d?.deviceInfo?.deviceName;
+        if (name && !seen.has(name)) {
+          seen.add(name);
+          const opt = document.createElement("option");
+          opt.value = name; opt.textContent = name;
+          select.appendChild(opt);
+        }
+      });
+    }
 
     function resetFilters() {
       document.getElementById("capteur").value = "all";
@@ -247,6 +256,36 @@
       currentData = await loadData();
       renderPage(prevPage);
     }
+    function exportCSV() {
+      if (!Array.isArray(currentData) || currentData.length === 0) {
+        showMessage("Aucune donnée à exporter.");
+        return;
+      }
+      const header = ["timestamp","Nom du capteur","Product_type","Fabricant","data","decoded"];
+      const rows = currentData.map(row => {
+        const decoded = row.decoded || {};
+        const product = decoded.Product_type ?? "Inconnu";
+        const devName = row.deviceInfo?.deviceName ?? "Inconnu";
+        const fabricant = decoded.Fabricant ?? "N/A";
+        const payload = row.data ?? "";
+        const decodedStr = JSON.stringify(decoded).replace(/\n/g," ");
+        return [
+          row.timestamp ?? "",
+          devName,
+          product,
+          fabricant,
+          payload,
+          decodedStr
+        ].map(v => `"${String(v).replace(/"/g,'""')}"`).join(",");
+      });
+      const csv = [header.join(","), ...rows].join("\n");
+      const blob = new Blob([csv], {type:"text/csv;charset=utf-8"});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = "export.csv"; a.click();
+      URL.revokeObjectURL(url);
+    }
+
 
     function renderPage(page) {
       const tbody = document.getElementById('sensor-tbody');
@@ -370,6 +409,7 @@
         console.error("Échec init Chart.js:", e);
       }
       await refreshTable();
+      populateCapteursFromCurrentData();
       setInterval(refreshTable, 10000);
     };
   </script>

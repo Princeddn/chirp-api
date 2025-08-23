@@ -21,7 +21,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # (Optionnel) Valider le JSON après téléchargement
       - name: Prepare site folder
         run: |
           rm -rf site
@@ -29,18 +28,18 @@ jobs:
 
       - name: Copy static HTML
         run: |
-          # adapte le chemin source si nécessaire :
-          # si ton fichier est dans templates/Pageweb.html :
+          # Si ton fichier est dans templates/, on copie depuis là.
           cp templates/Pageweb.html site/index.html || cp Pageweb.html site/index.html
 
       - name: Download database.json from data-backup branch
         run: |
+          set -e
           curl -fL https://raw.githubusercontent.com/Princeddn/chirp-api/data-backup/database.json -o site/database.json
 
       - name: Validate database.json
         run: |
           python - <<'PY'
-import json
+import json, sys
 with open('site/database.json','r',encoding='utf-8') as f:
     json.load(f)
 print("database.json OK")
