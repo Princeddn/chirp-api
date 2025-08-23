@@ -2,7 +2,7 @@ name: Build static chirp dashboard & deploy to Pages
 
 on:
   push:
-    branches: ["Bêta"]
+    branches: ["main"]
   workflow_dispatch:
 
 permissions:
@@ -34,12 +34,17 @@ jobs:
             cp Pageweb.html site/index.html
           fi
 
-      - name: Download database.json from data-backup branch
+      - name: Bring remote data (optional)
         run: |
-          curl -fL https://raw.githubusercontent.com/Princeddn/chirp-api/data-backup/database.json -o site/database.json
+          # si tu lis le RAW directement dans la page, tu peux COMMENTER cette ligne
+          curl -fL https://raw.githubusercontent.com/Princeddn/chirp-api/data-backup/database.json -o site/database.json || true
 
-      - name: Validate database.json
-        run: python -c "import json,sys; json.load(open('site/database.json','r',encoding='utf-8')); print('database.json OK')"
+      - name: Sanity check artifact
+        run: |
+          echo "==== site content ===="
+          ls -lah site || true
+          echo "======================"
+          test -s site/index.html || (echo "index.html manquant ou vide" && exit 1)
 
       - name: Setup Pages
         uses: actions/configure-pages@v5

@@ -380,6 +380,12 @@
       const result = await res.json();
       showMessage(result.status);
     }
+    const DATA_URL = 'https://raw.githubusercontent.com/Princeddn/chirp-api/data-backup/database.json';
+    async function loadData() {
+      const res = await fetch(`${DATA_URL}?t=${Date.now()}`, { cache: 'no-store' });
+      return await res.json();
+    }
+
 
     window.onload = async function() {
       // On initialise le chart dans un try/catch pour ne pas bloquer le reste en cas d'erreur
