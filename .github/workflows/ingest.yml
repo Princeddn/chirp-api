@@ -1,0 +1,73 @@
+name: Ingest uplink to data-backup
+
+on:
+  # Appelable par API
+  repository_dispatch:
+    types: [uplink]
+  # Appel manuel depuis l’onglet Actions (coller un JSON)
+  workflow_dispatch:
+    inputs:
+      json:
+        description: "Uplink JSON (objet)"
+        required: true
+        default: '{"id":"demo","timestamp":"2025-08-24 12:00:00 CEST"}'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ingest
+  cancel-in-progress: false
+
+jobs:
+  append:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout data-backup branch
+        uses: actions/checkout@v4
+        with:
+          ref: data-backup
+
+      - name: Ensure database.json exists
+        run: |
+          [ -f database.json ] || echo "[]" > database.json
+
+      - name: Merge payload into database.json (dedupe by id)
+        id: merge
+        run: |
+          python - <<'PY'
+          import json, os, pathlib, sys
+          p = pathlib.Path("database.json")
+          try:
+              data = json.loads(p.read_text(encoding="utf-8"))
+              if not isinstance(data, list): data = []
+          except Exception:
+              data = []
+
+          # 1) repository_dispatch → payload dans github.event.client_payload
+          # 2) workflow_dispatch   → payload dans inputs.json
+          src = os.environ.get("GITHUB_EVENT_NAME","")
+          if src == "repository_dispatch":
+              payload = json.loads(os.environ["PAYLOAD"])
+          else:
+              payload = json.loads(os.environ["WF_INPUT_JSON"])
+
+          # déduplication par id (si présent)
+          ids = {d.get("id") for d in data if isinstance(d, dict)}
+          if payload.get("id") not in ids:
+              data.append(payload)
+              p.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+              print("added")
+          else:
+              print("duplicate, skipped")
+          PY
+        env:
+          PAYLOAD: ${{ toJson(github.event.client_payload) }}
+          WF_INPUT_JSON: ${{ inputs.json }}
+
+      - name: Commit & push
+        if: always()
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          branch: data-backup
+          commit_message: "ingest: ${{ github.event.client_payload.id || inputs.json }}"

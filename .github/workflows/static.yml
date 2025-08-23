@@ -2,7 +2,7 @@ name: Build static chirp dashboard & deploy to Pages
 
 on:
   push:
-    branches: ["main"]
+    branches: ["Bêta"]
   workflow_dispatch:
 
 permissions:
