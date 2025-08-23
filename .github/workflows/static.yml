@@ -11,7 +11,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: "pages"
+  group: pages
   cancel-in-progress: false
 
 jobs:
@@ -28,22 +28,18 @@ jobs:
 
       - name: Copy static HTML
         run: |
-          # Si ton fichier est dans templates/, on copie depuis là.
-          cp templates/Pageweb.html site/index.html || cp Pageweb.html site/index.html
+          if [ -f templates/Pageweb.html ]; then
+            cp templates/Pageweb.html site/index.html
+          else
+            cp Pageweb.html site/index.html
+          fi
 
       - name: Download database.json from data-backup branch
         run: |
-          set -e
           curl -fL https://raw.githubusercontent.com/Princeddn/chirp-api/data-backup/database.json -o site/database.json
 
       - name: Validate database.json
-        run: |
-          python - <<'PY'
-import json, sys
-with open('site/database.json','r',encoding='utf-8') as f:
-    json.load(f)
-print("database.json OK")
-PY
+        run: python -c "import json,sys; json.load(open('site/database.json','r',encoding='utf-8')); print('database.json OK')"
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
@@ -54,11 +50,11 @@ PY
           path: site
 
   deploy:
+    needs: build
+    runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    needs: build
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
