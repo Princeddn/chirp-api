@@ -1,35 +1,35 @@
-# github_backup_push.py
-import os, base64, requests
+import os
+import subprocess
+from datetime import datetime
 
-def push_to_github(db_file="database.json"):
-    owner  = os.getenv("GH_OWNER", "Princeddn")
-    repo   = os.getenv("GH_REPO",  "chirp-api")
-    branch = os.getenv("GH_BRANCH","data-backup")
-    path   = os.getenv("GH_PATH",  "database.json")
-    token  = os.getenv("GH_TOKEN")  # PAT finement scoped: contents:write
+def push_to_github():
+    token = os.getenv("GITHUB_PAT")
+    user = os.getenv("GIT_USER")
+    email = os.getenv("GIT_EMAIL")
+    repo_url = f"https://{token}@github.com/{user}/chirp-api.git"
+    branch = "data-backup"
 
-    if not token:
-        raise RuntimeError("GH_TOKEN manquant (env).")
+    try:
+        # Configuration Git
+        subprocess.run(["git", "config", "--global", "user.email", email], check=True)
+        subprocess.run(["git", "config", "--global", "user.name", user], check=True)
 
-    headers = {
-        "Authorization": f"Bearer {token}",
-        "Accept": "application/vnd.github+json",
-    }
+        # Vérifier les modifications
+        changed = subprocess.run(["git", "diff", "--quiet", "database.json"]).returncode
 
-    # Récupérer le SHA courant (si le fichier existe)
-    url = f"https://api.github.com/repos/{owner}/{repo}/contents/{path}"
-    r = requests.get(url, headers=headers, params={"ref": branch})
-    sha = r.json().get("sha") if r.status_code == 200 else None
+        if changed == 1:
+            # Création du commit
+            subprocess.run(["git", "checkout", "-B", branch], check=True)
+            subprocess.run(["git", "add", "database.json"], check=True)
+            commit_msg = f"Backup auto {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+            subprocess.run(["git", "commit", "-m", commit_msg], check=True)
 
-    content_b64 = base64.b64encode(open(db_file, "rb").read()).decode()
-    payload = {
-        "message": "backup: update database.json",
-        "content": content_b64,
-        "branch": branch,
-    }
-    if sha:
-        payload["sha"] = sha
-
-    r = requests.put(url, headers=headers, json=payload, timeout=30)
-    r.raise_for_status()
-    return r.json()["content"]["sha"]
+            # Push forcé (nécessaire pour les branches de backup)
+            subprocess.run(["git", "push", "--force", repo_url, f"{branch}:{branch}"], check=True)
+            print("✅ Sauvegarde GitHub OK")
+        else:
+            print("⚠️ Aucun changement détecté")
+    except subprocess.CalledProcessError as e:
+        print(f"❌ Erreur Git: {e}")
+    except Exception as e:
+        print(f"❌ Erreur inattendue: {e}")
