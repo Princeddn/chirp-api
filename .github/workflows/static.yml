@@ -2,7 +2,7 @@ name: Build static chirp dashboard & deploy to Pages
 
 on:
   push:
-    branches: ["beta"]
+    branches: ['main', 'beta']
   workflow_dispatch:
 
 permissions:
@@ -34,10 +34,9 @@ jobs:
             cp Pageweb.html site/index.html
           fi
 
-      - name: Bring remote data (optional)
+      - name: Bring remote data
         run: |
-          # si tu lis le RAW directement dans la page, tu peux COMMENTER cette ligne
-          curl -fL https://raw.githubusercontent.com/Princeddn/chirp-api/data-backup/database.json -o site/database.json || true
+          curl -fL https://raw.githubusercontent.com/Princeddn/chirp-api/data-backup/database.json -o site/database.json
 
       - name: Sanity check artifact
         run: |
@@ -45,6 +44,7 @@ jobs:
           ls -lah site || true
           echo "======================"
           test -s site/index.html || (echo "index.html manquant ou vide" && exit 1)
+          test -s site/database.json || (echo "database.json manquant ou vide" && exit 1)
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
@@ -55,7 +55,7 @@ jobs:
           path: site
 
   deploy:
-    if: github.ref == 'refs/heads/main'  # déploie seulement depuis main
+    if: github.ref == 'refs/heads/beta'   # ← déploie UNIQUEMENT depuis main
     needs: build
     runs-on: ubuntu-latest
     environment:
