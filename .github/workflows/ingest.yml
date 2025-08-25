@@ -1,63 +1,70 @@
-name: Ingest uplink to data-backup
+name: Ingest uplink into database.json
 
 on:
   repository_dispatch:
     types: [uplink]
   workflow_dispatch:
-    inputs:
-      json:
-        description: "Uplink JSON (objet)"
-        required: true
-        default: '{"id":"demo","timestamp":"2025-08-24 12:00:00 CEST"}'
 
 permissions:
   contents: write
 
-concurrency:
-  group: ingest
-  cancel-in-progress: false
-
 jobs:
-  append:
+  ingest:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout data-backup branch
+      - name: Checkout beta branch
         uses: actions/checkout@v4
         with:
-          ref: data-backup
+          ref: beta
 
-      - name: Ensure database.json exists
+      - name: Set up Git user
         run: |
-          [ -f database.json ] || echo "[]" > database.json
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-      - name: Merge payload into database.json (dedupe by id)
+      - name: Append payload into database.json
         run: |
-          python - <<'PY'
-          import json, os, pathlib
-          p = pathlib.Path("database.json")
-          try:
-              data = json.loads(p.read_text(encoding="utf-8"))
-              if not isinstance(data, list): data = []
-          except Exception:
-              data = []
-          if os.environ.get("GITHUB_EVENT_NAME") == "repository_dispatch":
-              payload = json.loads(os.environ["PAYLOAD"])
-          else:
-              payload = json.loads(os.environ["WF_INPUT_JSON"])
-          ids = {d.get("id") for d in data if isinstance(d, dict)}
-          if payload.get("id") not in ids:
-              data.append(payload)
-              p.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
-              print("added")
-          else:
-              print("duplicate, skipped")
-          PY
-        env:
-          PAYLOAD: ${{ toJson(github.event.client_payload) }}
-          WF_INPUT_JSON: ${{ inputs.json }}
+          set -e
+          FILE="database.json"
+          if [ ! -f "$FILE" ]; then
+            echo "[]" > "$FILE"
+          fi
+          # Lire le payload envoyé (client_payload)
+          PAYLOAD=$(jq -c '.client_payload' "$GITHUB_EVENT_PATH")
 
-      - name: Commit & push
+          # Sécurité: si pas de payload → stop net
+          if [ "$PAYLOAD" = "null" ] || [ -z "$PAYLOAD" ]; then
+            echo "❌ Aucun client_payload reçu"; exit 1
+          fi
+
+          # Extraire un id unique (obligatoire pour éviter les doublons)
+          ID=$(echo "$PAYLOAD" | jq -r '.id // empty')
+          if [ -z "$ID" ]; then
+            echo "❌ client_payload.id est requis (string unique)"; exit 1
+          fi
+
+          # Charger la base
+          TMP="$(mktemp)"
+          cat "$FILE" | jq '.' > "$TMP" || (echo "❌ $FILE invalide"; exit 1)
+
+          # Vérifier doublon par id
+          EXISTS=$(cat "$TMP" | jq --arg id "$ID" '[.[] | select(.id==$id)] | length')
+          if [ "$EXISTS" != "0" ]; then
+            echo "ℹ️  id=$ID déjà présent → rien à faire."
+            exit 0
+          fi
+
+          # Append
+          NEW=$(jq --argjson rec "$PAYLOAD" '. + [$rec]' "$TMP")
+          echo "$NEW" | jq '.' > "$FILE"
+
+      - name: Commit & push changes
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          branch: data-backup
-          commit_message: "ingest: ${{ github.event.client_payload.id || inputs.json }}"
+          commit_message: "ingest: add record via repository_dispatch"
+          branch: beta
+          # Utilise le token GitHub Actions pour push
+          commit_user_name: github-actions[bot]
+          commit_user_email: 41898282+github-actions[bot]@users.noreply.github.com
+          # Si tu utilises un PAT, décommente la ligne suivante et ajoute le secret dans ton repo
+          # github_token: ${{ secrets.GH_PAT }}
