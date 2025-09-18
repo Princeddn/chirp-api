@@ -1,4 +1,4 @@
-name: Deploy static content to Pages
+name: Build static chirp dashboard & deploy to Pages
 
 on:
   push:
@@ -11,24 +11,54 @@ permissions:
   id-token: write
 
 concurrency:
-  group: "pages"
+  group: pages
   cancel-in-progress: false
 
 jobs:
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+  build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Prepare site folder
+        run: |
+          rm -rf site
+          mkdir -p site
+
+      - name: Copy static HTML
+        run: |
+          if [ -f index.html ]; then
+            cp index.html site/index.html
+          elif [ -f templates/Pageweb.html ]; then
+            cp templates/Pageweb.html site/index.html
+          else
+            echo "Aucun fichier HTML trouvé!"
+            exit 1
+          fi
+
+      - name: Download database.json from data-backup branch
+        run: |
+          curl -fL https://raw.githubusercontent.com/Princeddn/chirp-api/data-backup/database.json -o site/database.json
+
+      - name: Validate database.json
+        run: python -c "import json,sys; json.load(open('site/database.json','r',encoding='utf-8')); print('database.json OK')"
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: './templates'
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
