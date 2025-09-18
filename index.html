@@ -8,17 +8,284 @@
   <script src="https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1"></script>
   <style>
-    body { margin: 20px; }
-    pre { margin: 0; }
-    .alarm { background-color: #ffcccc !important; }
-    .pagination { justify-content: center; }
-    #grandeur-checkboxes .form-check { margin-right: 10px; }
+    :root {
+      --primary-color: #2563eb;
+      --secondary-color: #64748b;
+      --success-color: #059669;
+      --warning-color: #d97706;
+      --danger-color: #dc2626;
+      --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      --card-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      --border-radius: 12px;
+    }
+
+    body {
+      background: var(--bg-gradient);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+    }
+
+    .container {
+      background: rgba(255,255,255,0.95);
+      border-radius: var(--border-radius);
+      box-shadow: var(--card-shadow);
+      backdrop-filter: blur(10px);
+      padding: 30px;
+      margin-top: 20px;
+    }
+
+    h1 {
+      color: var(--primary-color);
+      font-weight: 600;
+      text-align: center;
+      margin-bottom: 30px;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .nav-tabs {
+      border: none;
+      background: #f8fafc;
+      border-radius: var(--border-radius);
+      padding: 8px;
+    }
+
+    .nav-tabs .nav-link {
+      border: none;
+      border-radius: 8px;
+      color: var(--secondary-color);
+      font-weight: 500;
+      transition: all 0.3s ease;
+      margin: 0 4px;
+    }
+
+    .nav-tabs .nav-link:hover {
+      background: rgba(37,99,235,0.1);
+      color: var(--primary-color);
+    }
+
+    .nav-tabs .nav-link.active {
+      background: var(--primary-color);
+      color: white;
+      box-shadow: 0 4px 12px rgba(37,99,235,0.3);
+    }
+
+    .card {
+      border: none;
+      border-radius: var(--border-radius);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+      transition: transform 0.3s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-2px);
+    }
+
+    .btn {
+      border-radius: 8px;
+      font-weight: 500;
+      padding: 8px 16px;
+      transition: all 0.3s ease;
+      border: none;
+    }
+
+    .btn-outline-primary {
+      border: 2px solid var(--primary-color);
+      color: var(--primary-color);
+    }
+
+    .btn-outline-primary:hover {
+      background: var(--primary-color);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(37,99,235,0.3);
+    }
+
+    .btn-outline-secondary {
+      border: 2px solid var(--secondary-color);
+      color: var(--secondary-color);
+    }
+
+    .btn-outline-success {
+      border: 2px solid var(--success-color);
+      color: var(--success-color);
+    }
+
+    .btn-outline-info {
+      border: 2px solid #0ea5e9;
+      color: #0ea5e9;
+    }
+
+    .btn-outline-danger {
+      border: 2px solid var(--danger-color);
+      color: var(--danger-color);
+    }
+
+    .form-control, .form-select {
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 10px 12px;
+      transition: all 0.3s ease;
+    }
+
+    .form-control:focus, .form-select:focus {
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+    }
+
+    .badge {
+      border-radius: 20px;
+      padding: 8px 16px;
+      font-size: 0.9em;
+    }
+
+    .table {
+      border-radius: var(--border-radius);
+      overflow: hidden;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+
+    .table thead th {
+      background: var(--primary-color);
+      color: white;
+      border: none;
+      font-weight: 600;
+      padding: 15px;
+    }
+
+    .table tbody td {
+      padding: 12px 15px;
+      border-color: #f1f5f9;
+    }
+
+    .alarm {
+      background: linear-gradient(90deg, #fee2e2, #fecaca) !important;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.8; }
+    }
+
+    .pagination .page-link {
+      border: none;
+      border-radius: 8px;
+      margin: 0 2px;
+      color: var(--primary-color);
+      font-weight: 500;
+    }
+
+    .pagination .page-item.active .page-link {
+      background: var(--primary-color);
+      box-shadow: 0 4px 12px rgba(37,99,235,0.3);
+    }
+
+    .alert {
+      border: none;
+      border-radius: var(--border-radius);
+      border-left: 4px solid var(--warning-color);
+    }
+
+    #chart {
+      border-radius: var(--border-radius);
+      background: white;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    }
+
+    pre {
+      background: #f8fafc;
+      border-radius: 6px;
+      padding: 8px;
+      margin: 0;
+      border: 1px solid #e2e8f0;
+      font-size: 0.85em;
+    }
+
+    .text-muted {
+      color: var(--secondary-color) !important;
+    }
+
+    #grandeur-checkboxes .form-check {
+      margin-right: 15px;
+      margin-bottom: 8px;
+    }
+
+    .form-check-input:checked {
+      background-color: var(--primary-color);
+      border-color: var(--primary-color);
+    }
+
+    .gap-3 {
+      gap: 1rem !important;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .stat-card {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border-radius: var(--border-radius);
+      padding: 1.5rem;
+      text-align: center;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+
+    .stat-value {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    .stat-label {
+      font-size: 0.9rem;
+      opacity: 0.9;
+    }
+
+    .loading {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(37,99,235,.3);
+      border-radius: 50%;
+      border-top-color: var(--primary-color);
+      animation: spin 1s ease-in-out infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
   </style>
 </head>
 <body class="container">
 
   <h1 class="mb-4">📡 Dashboard Capteurs LoRa</h1>
   <div id="message-container" class="alert alert-warning d-none" role="alert"></div>
+
+  <!-- Statistiques -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-value" id="total-sensors">-</div>
+      <div class="stat-label">Capteurs Actifs</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="total-data">-</div>
+      <div class="stat-label">Données Totales</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="last-received">-</div>
+      <div class="stat-label">Dernière Réception</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="status-indicator">🟢</div>
+      <div class="stat-label">Statut Système</div>
+    </div>
+  </div>
 
   <ul class="nav nav-tabs mb-4" id="myTabs">
     <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#graphe">📊 Graphe</a></li>
@@ -31,6 +298,7 @@
       <div class="mb-3 d-flex flex-wrap align-items-center gap-3">
         <span class="badge bg-secondary" id="nb-trames">0 trames affichées</span>
         <span class="text-muted" id="last-update">Dernière mise à jour : --</span>
+        <span class="loading d-none" id="loading-indicator"></span>
       </div>
 
       <div class="card p-3 mb-3">
@@ -126,6 +394,56 @@
     async function loadData() {
       const res = await fetch('database.json', { cache: 'no-store' });
       return await res.json();
+    }
+
+    function updateStats(data) {
+      // Nombre de capteurs uniques
+      const sensors = new Set();
+      data.forEach(d => {
+        const name = d?.deviceInfo?.deviceName;
+        if (name) sensors.add(name);
+      });
+      document.getElementById('total-sensors').textContent = sensors.size;
+
+      // Nombre total de données
+      document.getElementById('total-data').textContent = data.length.toLocaleString();
+
+      // Dernière réception
+      if (data.length > 0) {
+        const latest = data.reduce((latest, current) => {
+          const currentTime = new Date(current.timestamp);
+          const latestTime = new Date(latest.timestamp);
+          return currentTime > latestTime ? current : latest;
+        });
+        const timeAgo = getTimeAgo(new Date(latest.timestamp));
+        document.getElementById('last-received').textContent = timeAgo;
+      }
+
+      // Statut (basé sur la récence des données)
+      const now = new Date();
+      const oneHour = 60 * 60 * 1000;
+      const recentData = data.filter(d => {
+        const dataTime = new Date(d.timestamp);
+        return (now - dataTime) < oneHour;
+      });
+
+      if (recentData.length > 0) {
+        document.getElementById('status-indicator').textContent = '🟢';
+      } else {
+        document.getElementById('status-indicator').textContent = '🟡';
+      }
+    }
+
+    function getTimeAgo(date) {
+      const now = new Date();
+      const diff = now - date;
+      const minutes = Math.floor(diff / (1000 * 60));
+      const hours = Math.floor(diff / (1000 * 60 * 60));
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+
+      if (minutes < 60) return `${minutes}min`;
+      if (hours < 24) return `${hours}h`;
+      return `${days}j`;
     }
 
     function safeDateLabel(str) {
@@ -249,9 +567,17 @@
     }
 
     async function refreshTable() {
-      const prevPage = currentPage;
-      currentData = await loadData();
-      renderPage(prevPage);
+      const loading = document.getElementById('loading-indicator');
+      loading.classList.remove('d-none');
+
+      try {
+        const prevPage = currentPage;
+        currentData = await loadData();
+        updateStats(currentData);
+        renderPage(prevPage);
+      } finally {
+        loading.classList.add('d-none');
+      }
     }
 
     function exportCSV() {
