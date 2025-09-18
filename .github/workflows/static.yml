@@ -2,7 +2,7 @@ name: Build static chirp dashboard & deploy to Pages
 
 on:
   push:
-    branches: ["Bêta"]
+    branches: ["main", "data-backup"]
   workflow_dispatch:
 
 permissions:
@@ -28,10 +28,13 @@ jobs:
 
       - name: Copy static HTML
         run: |
-          if [ -f templates/Pageweb.html ]; then
+          if [ -f index.html ]; then
+            cp index.html site/index.html
+          elif [ -f templates/Pageweb.html ]; then
             cp templates/Pageweb.html site/index.html
           else
-            cp Pageweb.html site/index.html
+            echo "Aucun fichier HTML trouvé!"
+            exit 1
           fi
 
       - name: Download database.json from data-backup branch
