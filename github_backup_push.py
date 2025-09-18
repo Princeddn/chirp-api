@@ -6,8 +6,13 @@ def push_to_github():
     token = os.getenv("GITHUB_PAT")
     user = os.getenv("GIT_USER")
     email = os.getenv("GIT_EMAIL")
+    branch = os.getenv("GIT_BRANCH", "data-backup")  # Par défaut sur data-backup
+
+    if not token or not user or not email:
+        print("❌ GITHUB_PAT, GIT_USER ou GIT_EMAIL non défini dans les variables d'environnement.")
+        return
+
     repo_url = f"https://{token}@github.com/{user}/chirp-api.git"
-    branch = "data-backup"
 
     try:
         # Configuration Git
