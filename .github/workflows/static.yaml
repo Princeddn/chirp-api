@@ -26,10 +26,13 @@ jobs:
           rm -rf site
           mkdir -p site
 
-      - name: Copy static HTML
+      - name: Copy static files
         run: |
           if [ -f index.html ]; then
             cp index.html site/index.html
+            if [ -d assets ]; then
+              cp -r assets site/
+            fi
           elif [ -f templates/Pageweb.html ]; then
             cp templates/Pageweb.html site/index.html
           else
