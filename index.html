@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChirpStack Data Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        select, input {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .stat-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 24px;
+            font-weight: bold;
+            color: #007bff;
+        }
+        .data-table {
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        .error {
+            color: #dc3545;
+            padding: 20px;
+            background: #f8d7da;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+        .export-btn {
+            background: #28a745;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .export-btn:hover {
+            background: #218838;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌐 ChirpStack Data Dashboard</h1>
+
+        <div class="controls">
+            <select id="deviceFilter">
+                <option value="">Tous les capteurs</option>
+            </select>
+            <select id="typeFilter">
+                <option value="">Tous les types</option>
+            </select>
+            <input type="date" id="dateFilter" placeholder="Filtrer par date">
+            <button class="export-btn" onclick="exportToCSV()">📥 Export CSV</button>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number" id="totalCount">-</div>
+                <div>Total données</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="deviceCount">-</div>
+                <div>Capteurs actifs</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="lastUpdate">-</div>
+                <div>Dernière mise à jour</div>
+            </div>
+        </div>
+
+        <div id="loading" class="loading">
+            🔄 Chargement des données...
+        </div>
+
+        <div id="error" class="error" style="display: none;">
+            ❌ Erreur lors du chargement des données
+        </div>
+
+        <div class="data-table">
+            <table id="dataTable" style="display: none;">
+                <thead>
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>Capteur</th>
+                        <th>Type Produit</th>
+                        <th>Fabricant</th>
+                        <th>Données</th>
+                        <th>Valeurs</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        let allData = [];
+        let filteredData = [];
+
+        // URL des données sur GitHub
+        const DATA_URL = 'https://raw.githubusercontent.com/Princeddn/chirp-api/data-backup/database.json';
+
+        async function loadData() {
+            try {
+                const response = await fetch(DATA_URL);
+                if (!response.ok) throw new Error('Erreur de chargement');
+
+                allData = await response.json();
+                filteredData = [...allData];
+
+                updateStats();
+                updateFilters();
+                displayData();
+
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('dataTable').style.display = 'table';
+
+            } catch (error) {
+                console.error('Erreur:', error);
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('error').style.display = 'block';
+            }
+        }
+
+        function updateStats() {
+            const devices = new Set();
+            let lastTimestamp = '';
+
+            allData.forEach(item => {
+                if (item.deviceInfo?.deviceName) {
+                    devices.add(item.deviceInfo.deviceName);
+                }
+                if (item.timestamp > lastTimestamp) {
+                    lastTimestamp = item.timestamp;
+                }
+            });
+
+            document.getElementById('totalCount').textContent = allData.length.toLocaleString();
+            document.getElementById('deviceCount').textContent = devices.size;
+            document.getElementById('lastUpdate').textContent = lastTimestamp ?
+                new Date(lastTimestamp).toLocaleDateString('fr-FR') : 'N/A';
+        }
+
+        function updateFilters() {
+            const devices = new Set();
+            const types = new Set();
+
+            allData.forEach(item => {
+                if (item.deviceInfo?.deviceName) devices.add(item.deviceInfo.deviceName);
+                if (item.decoded?.Product_type) types.add(item.decoded.Product_type);
+            });
+
+            const deviceSelect = document.getElementById('deviceFilter');
+            const typeSelect = document.getElementById('typeFilter');
+
+            devices.forEach(device => {
+                const option = document.createElement('option');
+                option.value = device;
+                option.textContent = device;
+                deviceSelect.appendChild(option);
+            });
+
+            types.forEach(type => {
+                const option = document.createElement('option');
+                option.value = type;
+                option.textContent = type;
+                typeSelect.appendChild(option);
+            });
+        }
+
+        function filterData() {
+            const deviceFilter = document.getElementById('deviceFilter').value;
+            const typeFilter = document.getElementById('typeFilter').value;
+            const dateFilter = document.getElementById('dateFilter').value;
+
+            filteredData = allData.filter(item => {
+                if (deviceFilter && item.deviceInfo?.deviceName !== deviceFilter) return false;
+                if (typeFilter && item.decoded?.Product_type !== typeFilter) return false;
+                if (dateFilter && !item.timestamp.startsWith(dateFilter)) return false;
+                return true;
+            });
+
+            displayData();
+        }
+
+        function displayData() {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+
+            // Limiter à 100 entrées pour les performances
+            const dataToShow = filteredData.slice(0, 100);
+
+            dataToShow.forEach(item => {
+                const row = tbody.insertRow();
+
+                row.insertCell(0).textContent = item.timestamp || 'N/A';
+                row.insertCell(1).textContent = item.deviceInfo?.deviceName || 'Inconnu';
+                row.insertCell(2).textContent = item.decoded?.Product_type || 'N/A';
+                row.insertCell(3).textContent = item.decoded?.Fabricant || 'N/A';
+                row.insertCell(4).textContent = item.data || 'N/A';
+
+                // Afficher les valeurs décodées
+                const valuesCell = row.insertCell(5);
+                if (item.decoded && typeof item.decoded === 'object') {
+                    const values = Object.entries(item.decoded)
+                        .filter(([key]) => !['Product_type', 'Fabricant'].includes(key))
+                        .map(([key, value]) => `${key}: ${value}`)
+                        .slice(0, 3)
+                        .join(', ');
+                    valuesCell.textContent = values || 'N/A';
+                } else {
+                    valuesCell.textContent = 'N/A';
+                }
+            });
+
+            if (filteredData.length > 100) {
+                tbody.insertRow().innerHTML = `<td colspan="6" style="text-align: center; color: #666;">... et ${filteredData.length - 100} autres entrées</td>`;
+            }
+        }
+
+        function exportToCSV() {
+            let csv = 'Timestamp,Capteur,Type Produit,Fabricant,Données,Valeurs Décodées\n';
+
+            filteredData.forEach(item => {
+                const values = item.decoded && typeof item.decoded === 'object' ?
+                    JSON.stringify(item.decoded).replace(/"/g, '""') : '';
+
+                csv += [
+                    item.timestamp || '',
+                    item.deviceInfo?.deviceName || '',
+                    item.decoded?.Product_type || '',
+                    item.decoded?.Fabricant || '',
+                    item.data || '',
+                    `"${values}"`
+                ].join(',') + '\n';
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `chirpstack-data-${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            window.URL.revokeObjectURL(url);
+        }
+
+        // Event listeners
+        document.getElementById('deviceFilter').addEventListener('change', filterData);
+        document.getElementById('typeFilter').addEventListener('change', filterData);
+        document.getElementById('dateFilter').addEventListener('change', filterData);
+
+        // Charger les données au démarrage
+        loadData();
+
+        // Actualiser automatiquement toutes les 5 minutes
+        setInterval(loadData, 5 * 60 * 1000);
+    </script>
+</body>
+</html>
