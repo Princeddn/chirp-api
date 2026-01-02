@@ -9,8 +9,21 @@ from pytz import timezone
 app = Flask(__name__, static_folder='assets')
 DB_FILE = "database.json"
 GITHUB_RAW_URL = "https://raw.githubusercontent.com/Princeddn/chirp-api/data-backup/database.json"
-CHIRPSTACK_API_URL = os.getenv("CHIRPSTACK_API_URL", "https://chirpstack.example.com")
-CHIRPSTACK_API_TOKEN = os.getenv("CHIRPSTACK_API_TOKEN", "your_token_here")
+CONFIG_FILE = "config.json"
+
+def load_config():
+    try:
+        if os.path.exists(CONFIG_FILE):
+            with open(CONFIG_FILE, "r", encoding="utf-8") as f:
+                return json.load(f)
+    except Exception as e:
+        print(f"Error loading config: {e}")
+    return {}
+
+config = load_config()
+CHIRPSTACK_API_URL = config.get("CHIRPSTACK_API_URL", os.getenv("CHIRPSTACK_API_URL", "https://chirpstack.example.com"))
+CHIRPSTACK_API_TOKEN = config.get("CHIRPSTACK_API_TOKEN", os.getenv("CHIRPSTACK_API_TOKEN", "your_token_here"))
+
 
 def restore_database_from_github(force=False):
     if force or not os.path.exists(DB_FILE) or os.path.getsize(DB_FILE) == 0:
@@ -142,5 +155,29 @@ def send_downlink():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route('/api/config', methods=['GET'])
+def get_config():
+    # Return config but mask the token for security in UI if desired, 
+    # but for manual edit we might need to show it or a placeholder.
+    # Here sending plain text for user convenience as requested.
+    return jsonify(load_config())
+
+@app.route('/api/config', methods=['POST'])
+def update_config():
+    try:
+        new_config = request.json
+        # Basic validation could go here
+        with open(CONFIG_FILE, "w", encoding="utf-8") as f:
+            json.dump(new_config, f, indent=2)
+        
+        # Update runtime globals
+        global CHIRPSTACK_API_URL, CHIRPSTACK_API_TOKEN
+        CHIRPSTACK_API_URL = new_config.get("CHIRPSTACK_API_URL", CHIRPSTACK_API_URL)
+        CHIRPSTACK_API_TOKEN = new_config.get("CHIRPSTACK_API_TOKEN", CHIRPSTACK_API_TOKEN)
+        
+        return jsonify({"status": "success", "message": "Configuration updated"})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(debug=True, port=3000)

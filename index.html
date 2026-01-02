@@ -142,6 +142,10 @@
           <i class="bi bi-terminal-fill"></i>
           <span>Console Live</span>
         </button>
+        <button class="nav-item" onclick="switchView('settings')">
+          <i class="bi bi-sliders"></i>
+          <span>Paramètres</span>
+        </button>
 
         <div class="menu-header">Gestion</div>
         <button class="nav-item" onclick="switchView('devices')">
@@ -379,6 +383,51 @@
                 ENVOYER LA COMMANDE
               </button>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 6. SETTINGS -->
+      <div id="view-settings" class="view-section" style="display:none;">
+        <div class="card">
+          <div class="card-header">
+            <h3>Configuration de la Plateforme</h3>
+          </div>
+          <div class="card-body">
+            <form id="config-form" onsubmit="event.preventDefault(); saveConfig();">
+              <div class="mb-3">
+                <label class="form-label">URL API ChirpStack</label>
+                <input type="text" id="conf-chirpstack-url" class="input-dark w-100"
+                  placeholder="https://chirpstack.example.com">
+                <small class="text-muted">L'adresse de votre instance ChirpStack.</small>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Token API ChirpStack</label>
+                <input type="password" id="conf-chirpstack-token" class="input-dark w-100" placeholder="API Token">
+                <small class="text-muted">Clé d'API avec droits de lecture/écriture.</small>
+                <div class="form-check mt-1">
+                  <input type="checkbox" class="form-check-input" onclick="togglePassword('conf-chirpstack-token')">
+                  <label class="form-check-label small">Afficher</label>
+                </div>
+              </div>
+
+              <hr style="border-color:var(--border-color); margin: 2rem 0;">
+
+              <div class="mb-3">
+                <label class="form-label">Repo GitHub (Sauvegarde)</label>
+                <input type="text" id="conf-github-repo" class="input-dark w-100" placeholder="User/Repo">
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Branche GitHub</label>
+                <input type="text" id="conf-github-branch" class="input-dark w-100" placeholder="main">
+              </div>
+
+              <div class="d-flex justify-content-end mt-4">
+                <button type="submit" class="btn-primary-glow">
+                  <i class="bi bi-save"></i> Enregistrer les modifications
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       </div>

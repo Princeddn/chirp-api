@@ -25,7 +25,8 @@ function switchView(viewName) {
     'devices': 'Gestion des Appareils',
     'console': 'Terminal de Commande',
     'analytics': 'Analyses & Rapports',
-    'data': 'Historique des Données'
+    'data': 'Historique des Données',
+    'settings': 'Configuration'
   };
   document.getElementById('page-title').innerText = titles[viewName];
 
@@ -523,7 +524,78 @@ function showAddDeviceModal() { alert("Fonctionnalité backend à venir."); }
 
 // Auto-refresh logic for Live Feel
 setInterval(() => {
-  // Only fetch if tab is active to save bandwidth? 
-  // Or always to keep up.
   fetchData();
 }, 30000);
+
+// --- Settings Logic ---
+function togglePassword(id) {
+  const el = document.getElementById(id);
+  if (el) el.type = el.type === 'password' ? 'text' : 'password';
+}
+
+async function loadConfig() {
+  try {
+    const res = await fetch('/api/config');
+    if (!res.ok) return; // Silent fail if optional
+    const config = await res.json();
+
+    if (document.getElementById('conf-chirpstack-url')) {
+      document.getElementById('conf-chirpstack-url').value = config.CHIRPSTACK_API_URL || '';
+      document.getElementById('conf-chirpstack-token').value = config.CHIRPSTACK_API_TOKEN || '';
+      document.getElementById('conf-github-repo').value = config.GITHUB_REPO || '';
+      document.getElementById('conf-github-branch').value = config.GITHUB_BRANCH || '';
+    }
+  } catch (e) {
+    console.error("Failed to load config", e);
+  }
+}
+
+async function saveConfig() {
+  const config = {
+    CHIRPSTACK_API_URL: document.getElementById('conf-chirpstack-url').value,
+    CHIRPSTACK_API_TOKEN: document.getElementById('conf-chirpstack-token').value,
+    GITHUB_REPO: document.getElementById('conf-github-repo').value,
+    GITHUB_BRANCH: document.getElementById('conf-github-branch').value
+  };
+
+  try {
+    const res = await fetch('/api/config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(config)
+    });
+    const data = await res.json();
+    if (res.ok) alert("Configuration sauvegardée !");
+    else alert("Erreur: " + data.error);
+  } catch (e) {
+    alert("Erreur réseau: " + e.message);
+  }
+}
+
+// Hook loadConfig into navigation or init
+// For simplicity, load it when View Switching to settings
+const originalSwitchView = window.switchView;
+window.switchView = function (viewName) {
+  if (originalSwitchView) originalSwitchView(viewName); // Call original defined in global scope (actually it's defined as function switchView... hoisting might handle it but let's be safe)
+  else switchViewRef(viewName); // Fallback if reassignment weirdness
+
+  if (viewName === 'settings') loadConfig();
+};
+// Re-assign original reference to be handled
+function switchViewRef(viewName) {
+  document.querySelectorAll('.nav-item').forEach(btn => btn.classList.remove('active'));
+  // Find button ... logic is duplicated? No, just hook it.
+  // Actually simpler: just call loadConfig() once at startup too.
+}
+// Better: just add it to DOMContentLoaded if we want it preloaded, 
+// or in the HTML onclick="switchView('settings'); loadConfig()" ? 
+// Let's just modify the switchView function in place if possible, 
+// but since I'm appending, I can just overload/wrap it?
+// The previous switchView was defined as `function switchView(...)`.
+// We can overwrite it?
+// Yes.
+const _oldSwitch = switchView;
+switchView = function (name) {
+  _oldSwitch(name);
+  if (name === 'settings') loadConfig();
+}

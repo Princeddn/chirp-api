@@ -1,0 +1,6 @@
+{
+    "CHIRPSTACK_API_URL": "https://chirpstack.example.com",
+    "CHIRPSTACK_API_TOKEN": "your_token_here",
+    "GITHUB_REPO": "Princeddn/chirp-api",
+    "GITHUB_BRANCH": "data-backup"
+}
