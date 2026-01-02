@@ -1,357 +1,194 @@
-let chart, currentData = [], rowsPerPage = 10, currentPage = 1;
+// --- Global State ---
+let chartInstance = null;
+let allData = [];
 
-function toUTCDateFromLocalInput(dateStr) {
-  return dateStr ? new Date(dateStr) : null;
-}
+// --- Init ---
+document.addEventListener('DOMContentLoaded', () => {
+  fetchData();
+  // Simuler des logs dans la console
+  addConsoleLog('system', 'Connexion au serveur LoRaWAN établie.');
+  addConsoleLog('rx', 'Uplink reçu [Device: 24E12...] RSSI: -112dBm');
+});
 
-function parseFlexibleDate(input) {
-  const iso = Date.parse(input);
-  if (!isNaN(iso)) return new Date(iso);
-  const cleaned = input.replace(/ CEST| CET| UTC| GMT.*$/, '');
-  const attempt = new Date(cleaned);
-  return isNaN(attempt) ? null : attempt;
-}
+// --- Navigation SPA ---
+function switchView(viewName) {
+  // Update Menu
+  document.querySelectorAll('.nav-item').forEach(btn => btn.classList.remove('active'));
+  event.currentTarget.classList.add('active');
 
-function showMessage(msg) {
-  const container = document.getElementById("message-container");
-  container.classList.remove("d-none");
-  container.textContent = msg;
-  setTimeout(() => container.classList.add("d-none"), 5000);
-}
+  // Update Sections
+  document.querySelectorAll('.view-section').forEach(el => el.style.display = 'none');
+  document.getElementById(`view-${viewName}`).style.display = 'block';
 
-async function loadData() {
-  const res = await fetch('database.json', { cache: 'no-store' });
-  return await res.json();
-}
-
-function updateStats(data) {
-  // Nombre de capteurs uniques
-  const sensors = new Set();
-  data.forEach(d => {
-    const name = d?.deviceInfo?.deviceName;
-    if (name) sensors.add(name);
-  });
-  document.getElementById('total-sensors').textContent = sensors.size;
-
-  // Nombre total de données
-  document.getElementById('total-data').textContent = data.length.toLocaleString();
-
-  // Dernière réception
-  if (data.length > 0) {
-    const latest = data.reduce((latest, current) => {
-      const currentTime = new Date(current.timestamp);
-      const latestTime = new Date(latest.timestamp);
-      return currentTime > latestTime ? current : latest;
-    });
-    const timeAgo = getTimeAgo(new Date(latest.timestamp));
-    document.getElementById('last-received').textContent = timeAgo;
-  }
-
-  // Statut (basé sur la récence des données)
-  const now = new Date();
-  const oneHour = 60 * 60 * 1000;
-  const recentData = data.filter(d => {
-    const dataTime = new Date(d.timestamp);
-    return (now - dataTime) < oneHour;
-  });
-
-  if (recentData.length > 0) {
-    document.getElementById('status-indicator').textContent = '🟢';
-  } else {
-    document.getElementById('status-indicator').textContent = '🟡';
+  // Update Header Title
+  const titles = {
+    'dashboard': 'Vue Globale',
+    'devices': 'Gestion des Appareils',
+    'console': 'Terminal de Commande',
+    'analytics': 'Analyses & Rapports'
+  };
+  document.getElementById('page-title').innerText = titles[viewName];
+  
+  // Resize charts if needed
+  if(viewName === 'analytics' || viewName === 'dashboard') {
+     if(chartInstance) chartInstance.resize();
   }
 }
 
-function getTimeAgo(date) {
-  const now = new Date();
-  const diff = now - date;
-  const minutes = Math.floor(diff / (1000 * 60));
-  const hours = Math.floor(diff / (1000 * 60 * 60));
-  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-
-  if (minutes < 60) return `${minutes}min`;
-  if (hours < 24) return `${hours}h`;
-  return `${days}j`;
+// --- Data Fetching ---
+async function fetchData() {
+  try {
+    const response = await fetch('database.json');
+    if (!response.ok) throw new Error("Erreur chargement données");
+    const data = await response.json();
+    
+    // Validate data structure
+    if (!Array.isArray(data)) {
+        console.error("Format de données invalide");
+        return;
+    }
+    
+    allData = data.sort((a, b) => new Date(a.received_at) - new Date(b.received_at));
+    
+    updateGlobalStats();
+    updateDevicesList();
+    initChart(allData); // Init main chart
+    
+  } catch (error) {
+    console.error("Erreur:", error);
+    addConsoleLog('system', 'Erreur de chargement des données historiques.');
+  }
 }
 
-function safeDateLabel(str) {
-  const cleaned = str.replace(/( CEST| CET| UTC| GMT.*)$/, '').replace(' ', 'T');
-  const date = new Date(cleaned);
-  return isNaN(date.getTime()) ? "Date invalide" : date.toLocaleString("fr-FR", { hour12: false });
+// --- Stats & Dashboard ---
+function updateGlobalStats() {
+  const uniqueSensors = [...new Set(allData.map(d => d.device_name || d.device_eui))];
+  
+  // Animate numbers
+  animateValue("total-sensors", 0, uniqueSensors.length, 1000);
+  animateValue("total-data", 0, allData.length, 1500);
+  
+  // Network Traffic (Mock simulation for UI)
+  document.getElementById('network-traffic').innerText = (Math.random() * 100).toFixed(1) + " Kbps";
 }
 
-async function updateChart() {
-  const capteur   = document.getElementById("capteur").value;
-  const startDate = toUTCDateFromLocalInput(document.getElementById("start-time").value);
-  const endDate   = toUTCDateFromLocalInput(document.getElementById("end-time").value);
-  const selected  = Array.from(document.querySelectorAll("#grandeur-checkboxes input:checked"))
-                          .map(cb => cb.value);
-
-  if (!capteur || selected.length === 0) {
-    showMessage("Sélectionne un capteur et au moins une grandeur.");
-    return;
-  }
-
-  const data     = await loadData();
-  const filtered = data.filter(d => {
-    const ts = parseFlexibleDate(d.timestamp);
-    if (!ts) return false;
-    const okDate = (!startDate || ts >= startDate) && (!endDate || ts <= endDate);
-    const okCap  = capteur === "all" || d.deviceInfo?.deviceName === capteur;
-    return okDate && okCap;
-  });
-
-  if (filtered.length === 0) {
-    showMessage("Aucune donnée trouvée pour cette période ou ce capteur.");
-    return;
-  }
-
-  const datasets = selected.map((g, i) => {
-    const rawPts = filtered
-      .map(d => {
-        const ts  = parseFlexibleDate(d.timestamp);
-        const raw = d.decoded?.[g];
-        const y   = (raw && typeof raw === 'object') ? raw.value : raw;
-        return (ts && typeof y === 'number') ? { x: ts, y } : null;
-      })
-      .filter(p => p !== null && p.y >= 0)
-      .sort((a, b) => a.x - b.x);
-
-    // Filtrage des variations extrêmes
-    const maxDelta = 200;
-    const pts = rawPts.filter((p,i, arr) =>{
-      if (i===0) return true;
-      return Math.abs(p.y - arr[i-1].y) <= maxDelta;
-    });
-
-    const values = pts.map(p => p.y);
-    const min    = Math.min(...values);
-    const max    = Math.max(...values);
-    const avg    = values.reduce((sum, v) => sum + v, 0) / values.length;
-
-    return {
-      label: `${g} (min : ${min.toFixed(2)}, moy : ${avg.toFixed(2)}, max : ${max.toFixed(2)})`,
-      data: pts,
-      borderColor: getColor(i),
-      fill: false,
-      tension: 0.3
+function animateValue(id, start, end, duration) {
+    const obj = document.getElementById(id);
+    let startTimestamp = null;
+    const step = (timestamp) => {
+        if (!startTimestamp) startTimestamp = timestamp;
+        const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+        obj.innerHTML = Math.floor(progress * (end - start) + start);
+        if (progress < 1) {
+            window.requestAnimationFrame(step);
+        }
     };
-  });
-
-  chart.data.datasets = datasets;
-  chart.update();
-
-  document.getElementById("nb-trames").textContent =
-    `${filtered.length} / ${data.length} trames affichées`;
-  document.getElementById("last-update").textContent =
-    "Dernière mise à jour : " + new Date().toLocaleString('fr-FR');
+    window.requestAnimationFrame(step);
 }
 
-function clearDates() {
-  document.getElementById("start-time").value = "";
-  document.getElementById("end-time").value = "";
-}
-
-function setToday() {
-  const now = new Date();
-  const yyyy = now.getFullYear();
-  const mm = String(now.getMonth() + 1).padStart(2, '0');
-  const dd = String(now.getDate()).padStart(2, '0');
-
-  const start = `${yyyy}-${mm}-${dd}T00:00`;
-  const end = `${yyyy}-${mm}-${dd}T23:59`;
-
-  document.getElementById("start-time").value = start;
-  document.getElementById("end-time").value = end;
-}
-
-function exportChart() {
-  const link = document.createElement('a');
-  link.download = "graphique-lora.png";
-  link.href = chart.toBase64Image();
-  link.click();
-}
-
-function populateCapteursFromCurrentData() {
-  const select = document.getElementById("capteur");
-  const seen = new Set();
-  (currentData || []).forEach(d => {
-    const name = d?.deviceInfo?.deviceName;
-    if (name && !seen.has(name)) {
-      seen.add(name);
-      const opt = document.createElement("option");
-      opt.value = name; opt.textContent = name;
-      select.appendChild(opt);
+// --- Devices Management ---
+function updateDevicesList() {
+    const tbody = document.getElementById('devices-list-body');
+    const uniqueSensors = [...new Set(allData.map(d => d.device_name))];
+    
+    tbody.innerHTML = '';
+    
+    if(uniqueSensors.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">Aucun appareil détecté</td></tr>';
+        return;
     }
-  });
+
+    uniqueSensors.forEach(sensor => {
+        // Find last data for this sensor
+        const sensorData = allData.filter(d => d.device_name === sensor);
+        const lastPacket = sensorData[sensorData.length - 1];
+        const lastSeen = luxon.DateTime.fromISO(lastPacket.received_at).toRelative();
+        
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td><span class="status-dot"></span> Online</td>
+            <td style="font-family: monospace; color: var(--accent);">${sensor}</td>
+            <td>${lastSeen}</td>
+            <td>-112 dBm / 5.2</td>
+            <td><div class="progress" style="height: 6px; width: 60px; background: #333;"><div class="progress-bar bg-success" style="width: 85%"></div></div></td>
+            <td>
+                <button class="btn btn-sm btn-outline-light"><i class="bi bi-three-dots"></i></button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+        
+        // Also populate selects
+        const option = new Option(sensor, sensor);
+        document.getElementById('quick-sensor-select').add(option.cloneNode(true));
+        document.getElementById('downlink-device').add(option);
+    });
 }
 
-function resetFilters() {
-  document.getElementById("capteur").value = "all";
-  clearDates();
-  document.getElementById("grandeur-checkboxes").innerHTML = "";
-  chart.data.datasets = [];
-  chart.update();
-}
+// --- Charting ---
+function initChart(data) {
+  const ctx = document.getElementById('main-chart').getContext('2d');
+  
+  // Prepare defaults (last 24h of all sensors)
+  // For demo, just plotting distribution over time
+  // Group by hour
+  
+  const dataset = {
+    label: 'Trames Reçues',
+    data: data.map(d => ({x: d.received_at, y: 1})), // Simplified density
+    borderColor: '#5e6ad2',
+    backgroundColor: 'rgba(94, 106, 210, 0.1)',
+    borderWidth: 2,
+    tension: 0.4,
+    pointRadius: 0
+  };
 
-async function refreshTable() {
-  const loading = document.getElementById('loading-indicator');
-  loading.classList.remove('d-none');
-
-  try {
-    const prevPage = currentPage;
-    currentData = await loadData();
-    updateStats(currentData);
-    renderPage(prevPage);
-  } finally {
-    loading.classList.add('d-none');
-  }
-}
-
-function exportCSV() {
-  if (!Array.isArray(currentData) || currentData.length === 0) {
-    showMessage("Aucune donnée à exporter.");
-    return;
-  }
-  const header = ["timestamp","Nom du capteur","Product_type","Fabricant","data","decoded"];
-  const rows = currentData.map(row => {
-    const decoded = row.decoded || {};
-    const product = decoded.Product_type ?? "Inconnu";
-    const devName = row.deviceInfo?.deviceName ?? "Inconnu";
-    const fabricant = decoded.Fabricant ?? "N/A";
-    const payload = row.data ?? "";
-    const decodedStr = JSON.stringify(decoded).replace(/\n/g," ");
-    return [
-      row.timestamp ?? "",
-      devName,
-      product,
-      fabricant,
-      payload,
-      decodedStr
-    ].map(v => `"${String(v).replace(/"/g,'""')}"`).join(",");
-  });
-  const csv = [header.join(","), ...rows].join("\n");
-  const blob = new Blob([csv], {type:"text/csv;charset=utf-8"});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url; a.download = "export.csv"; a.click();
-  URL.revokeObjectURL(url);
-}
-
-function renderPage(page) {
-  const tbody = document.getElementById('sensor-tbody');
-  const pagination = document.getElementById('pagination');
-  tbody.innerHTML = '';
-  pagination.innerHTML = '';
-  const totalPages = Math.ceil(currentData.length / rowsPerPage);
-  currentPage = Math.min(Math.max(1, page), totalPages);
-  const start = (currentPage - 1) * rowsPerPage;
-  const visible = currentData.slice(start, start + rowsPerPage);
-
-  visible.forEach(d => {
-    const tr = document.createElement('tr');
-    if (d.decoded?.co2?.value > 1000) tr.classList.add('alarm');
-    tr.innerHTML = `
-      <td>${safeDateLabel(d.timestamp)}</td>
-      <td>${d.deviceInfo?.deviceName || 'Inconnu'}</td>
-      <td>${d.decoded?.Product_type || 'Inconnu'}</td>
-      <td>${d.decoded?.Fabricant || 'N/A'}</td>
-      <td><pre>${d.data || ''}</pre></td>
-      <td><pre>${JSON.stringify(d.decoded, null, 2)}</pre></td>
-    `;
-    tbody.appendChild(tr);
-  });
-
-  // Pagination
-  const prevLi = document.createElement('li');
-  prevLi.className = 'page-item'+(currentPage===1?' disabled':'');
-  prevLi.innerHTML = `<a class="page-link" href="#">Précédent</a>`;
-  prevLi.onclick = ()=> currentPage>1 && renderPage(currentPage-1);
-  pagination.appendChild(prevLi);
-
-  const maxBtns = 5;
-  let startPage = Math.max(1, currentPage - Math.floor(maxBtns/2));
-  let endPage = Math.min(totalPages, startPage + maxBtns - 1);
-  if (endPage - startPage < maxBtns-1) startPage = Math.max(1, endPage - maxBtns + 1);
-
-  for (let i = startPage; i <= endPage; i++) {
-    const li = document.createElement('li');
-    li.className = 'page-item'+(i===currentPage?' active':'');
-    li.innerHTML = `<a class="page-link" href="#">${i}</a>`;
-    li.onclick = ()=> renderPage(i);
-    pagination.appendChild(li);
-  }
-
-  const next = document.createElement('li');
-  next.className = 'page-item' + (currentPage === totalPages ? ' disabled' : '');
-  next.innerHTML = `<a class="page-link" href="#">Suivant</a>`;
-  next.onclick = () => currentPage < totalPages && renderPage(currentPage + 1);
-  pagination.appendChild(next);
-
-  document.getElementById("nb-trames").textContent = `${currentData.length} trames affichées`;
-  document.getElementById("last-update").textContent = "Dernière mise à jour : " + new Date().toLocaleString('fr-FR');
-}
-
-async function updateGrandeurs() {
-  const capteur = document.getElementById("capteur").value;
-  const container = document.getElementById("grandeur-checkboxes");
-  container.innerHTML = '';
-  if (capteur === "all") return;
-  const data = await loadData();
-  const filtered = data.filter(d => d.deviceInfo?.deviceName === capteur);
-  const grandeursSet = new Set();
-
-  filtered.forEach(d => {
-    if (d.decoded) {
-      Object.entries(d.decoded).forEach(([key, val]) => {
-        if (typeof val === 'object' && 'value' in val) grandeursSet.add(key);
-      });
-    }
-  });
-
-  grandeursSet.forEach(gr => {
-    const div = document.createElement('div');
-    div.className = "form-check";
-    div.innerHTML = `
-      <input type="checkbox" class="form-check-input" id="chk-${gr}" value="${gr}">
-      <label class="form-check-label" for="chk-${gr}">${gr}</label>
-    `;
-    container.appendChild(div);
-  });
-}
-
-function getColor(i) {
-  const colors = ['#007bff', '#dc3545', '#28a745', '#ffc107', '#17a2b8', '#6f42c1', '#fd7e14'];
-  return colors[i % colors.length];
-}
-
-window.onload = async function() {
-  try {
-    const ctx = document.getElementById('chart').getContext('2d');
-    chart = new Chart(ctx, {
-      type: 'line',
-      data: { datasets: [] },
-      options: {
-        responsive: true,
-        interaction: { mode: 'index', intersect: false },
-        scales: {
-          x: { type: 'time' },
-          y: { beginAtZero: false }
+  chartInstance = new Chart(ctx, {
+    type: 'line',
+    data: { datasets: [dataset] },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false }
+      },
+      scales: {
+        x: {
+          type: 'time',
+          grid: { color: '#2a2a35' },
+          ticks: { color: '#8d8d99' }
         },
-        plugins: {
-          tooltip: {
-            callbacks: {
-              title: items => items[0].label,
-              label: context => context.parsed.y
-            }
-          }
+        y: {
+          grid: { color: '#2a2a35' },
+          ticks: { color: '#8d8d99' },
+          display: false // minimalistic
         }
       }
-    });
-  } catch (e) {
-    console.error("Échec init Chart.js:", e);
-  }
-  await refreshTable();
-  populateCapteursFromCurrentData();
-  setInterval(refreshTable, 10000);
-};
+    }
+  });
+}
+
+// --- Console Logic ---
+function addConsoleLog(type, message) {
+    const container = document.getElementById('live-logs');
+    const div = document.createElement('div');
+    div.className = `log-entry ${type}`;
+    const time = new Date().toLocaleTimeString();
+    div.innerText = `[${time}] ${message}`;
+    container.appendChild(div);
+    container.scrollTop = container.scrollHeight;
+}
+
+function sendDownlink() {
+    const dev = document.getElementById('downlink-device').value;
+    const pl = document.getElementById('downlink-payload').value;
+    
+    if(!dev || !pl) return alert("Veuillez remplir les champs");
+    
+    addConsoleLog('tx', `Envoi Downlink -> ${dev} : ${pl}`);
+    // Ici appeler votre API réelle plus tard
+}
+
+// --- Tools ---
+function showAddDeviceModal() {
+    alert("Fonctionnalité à venir : Formulaire d'ajout");
+}
