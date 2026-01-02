@@ -377,7 +377,44 @@ function addConsoleLog(type, message) {
   container.appendChild(div);
   container.scrollTop = container.scrollHeight;
 }
-function sendDownlink() {
-  alert("Simulation: Commande envoyée au serveur!");
+
+async function sendDownlink() {
+  const dev = document.getElementById('downlink-device').value;
+  const pl = document.getElementById('downlink-payload').value;
+  const port = parseInt(document.getElementById('downlink-port')?.value || '1');
+
+  if (!dev || !pl) return alert("Veuillez remplir Device et Payload");
+
+  addConsoleLog('tx', `Envoi Downlink -> ${dev} : ${pl}...`);
+
+  try {
+    const res = await fetch('/api/downlink', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ devEui: dev, data: pl, fPort: port })
+    });
+
+    const json = await res.json();
+
+    if (res.ok) {
+      addConsoleLog('system', `Succès: ${json.status} (${json.message || 'Queued'})`);
+      alert("Commande envoyée avec succès !");
+    } else {
+      addConsoleLog('system', `Erreur: ${json.error}`);
+      alert("Erreur lors de l'envoi: " + json.error);
+    }
+  } catch (e) {
+    console.error(e);
+    addConsoleLog('system', "Erreur réseau lors de l'envoi.");
+    alert("Erreur réseau: " + e.message);
+  }
 }
-function showAddDeviceModal() { alert("Simulation: Scanner QR Code..."); }
+
+function showAddDeviceModal() { alert("Fonctionnalité backend à venir."); }
+
+// Auto-refresh logic for Live Feel
+setInterval(() => {
+  // Only fetch if tab is active to save bandwidth? 
+  // Or always to keep up.
+  fetchData();
+}, 30000);

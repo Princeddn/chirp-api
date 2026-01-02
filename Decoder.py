@@ -301,3 +301,80 @@ class WattecoDecoder(BaseDecoder):
 
         except Exception as e:
             return {"erreur": str(e)}
+
+class MilesightDecoder(BaseDecoder):
+    def decode_milesight(self, payload_hex):
+        # Placeholder for Milesight - implementing basic structure usually found
+        # Real Milesight decoding is complex and varies by sensor (WS301, AM107, etc.)
+        # We will attempt to identify the sensor type from the payload header if possible
+        # or just return raw data with a label.
+        
+        # Most Milesight sensors use a Type-Length-Value (TLV) format.
+        # Channel (1 byte) | Type (1 byte) | Value (N bytes)
+        
+        results = {"Fabricant": "Milesight", "raw": payload_hex}
+        try:
+            i = 0
+            while i < len(payload_hex):
+                channel_id = int(payload_hex[i:i+2], 16)
+                channel_type = int(payload_hex[i+2:i+4], 16)
+                i += 4
+                
+                # Simple parser for common types
+                if channel_type == 0x01: # Battery
+                    results["battery"] = int(payload_hex[i:i+2], 16)
+                    i += 2
+                elif channel_type == 0x03: # Temperature
+                    results["temperature"] = {"value": int(payload_hex[i:i+4], 16, byteorder='little', signed=True) / 10.0, "unit": "°C"}
+                    i += 4
+                elif channel_type == 0x04: # Humidity
+                    results["humidity"] = {"value": int(payload_hex[i:i+2], 16) / 2.0, "unit": "%RH"}
+                    i += 2
+                elif channel_type == 0x06: # PIR/Door (Digital Input)
+                    results["state"] = "Open" if int(payload_hex[i:i+2], 16) == 1 else "Closed"
+                    i += 2
+                else:
+                    # Skip unknown or complex types for safety in this generic decoder
+                    # In a real scenario we would implement all specs (Co2, TVOC, Pressure...)
+                    break 
+        except Exception:
+            results["warning"] = "Partial decode or unknown format"
+            
+        return results
+
+class DraginoDecoder(BaseDecoder):
+    def decode_dragino(self, payload_hex):
+        # LHT65/LHT65N are most common. 
+        # Format usually: Bat(2) | Temp_Internal(2) | Hum(2) | Temp_Ext(2) ...
+        # But generic fallback is safest without model specific info in payload
+        results = {"Fabricant": "Dragino", "raw": payload_hex}
+        
+        # Heuristic for LHT65 (10+ bytes)
+        if len(payload_hex) >= 20: 
+            try:
+                bat_mv = int(payload_hex[0:4], 16)
+                temp_int = int(payload_hex[4:8], 16)
+                if temp_int > 0xF000: temp_int -= 0x10000
+                
+                hum = int(payload_hex[8:12], 16)
+                
+                results["battery_mv"] = bat_mv
+                results["temperature"] = {"value": temp_int / 100.0, "unit": "°C"}
+                results["humidity"] = {"value": hum / 10.0, "unit": "%"}
+                results["Model_Hint"] = "LHT65/LHT65N"
+            except:
+                pass
+        return results
+        
+class EastronDecoder(BaseDecoder):
+    def decode_eastron(self, payload_hex):
+        # Typically Modbus over LoRaWAN or specific frame
+        # Placeholder
+        return {"Fabricant": "Eastron", "raw": payload_hex, "info": "Decoding requires register map"}
+
+class MClimateDecoder(BaseDecoder):
+    def decode_mclimate(self, payload_hex):
+        # Example for Vicki (Valve)
+        # Byte 0: Reason?
+        # Byte 1: Target Temp
+        return {"Fabricant": "MClimate", "raw": payload_hex}

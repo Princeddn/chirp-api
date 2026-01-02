@@ -1,201 +1,188 @@
-from flask import Flask, request, jsonify, send_file, render_template
+from flask import Flask, request, jsonify, send_file, render_template, send_from_directory
 from datetime import datetime
 import json, os, csv, uuid, time
 from github_backup_push import push_to_github
 import requests
-from Decoder import BaseDecoder, NexelecDecoder, WattecoDecoder
-from pytz import timezone  # Pour la gestion du fuseau horaire
+from Decoder import BaseDecoder, NexelecDecoder, WattecoDecoder, MilesightDecoder, DraginoDecoder, EastronDecoder, MClimateDecoder
+from pytz import timezone
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='assets')
 DB_FILE = "database.json"
 GITHUB_RAW_URL = "https://raw.githubusercontent.com/Princeddn/chirp-api/data-backup/database.json"
-convertion = BaseDecoder()
-decoder_nexelec = NexelecDecoder()
-decoder_watteco = WattecoDecoder()
+CHIRPSTACK_API_URL = os.getenv("CHIRPSTACK_API_URL", "https://chirpstack.example.com")
+CHIRPSTACK_API_TOKEN = os.getenv("CHIRPSTACK_API_TOKEN", "your_token_here")
 
+# Initialize Decoders
+convertion = BaseDecoder()
+decoders = {
+    "nexelec": NexelecDecoder(),
+    "watteco": WattecoDecoder(),
+    "milesight": MilesightDecoder(),
+    "dragino": DraginoDecoder(),
+    "eastron": EastronDecoder(),
+    "mclimate": MClimateDecoder()
+}
 
 def restore_database_from_github(force=False):
-    """
-    Restaure la base locale depuis GitHub si elle est vide ou absente,
-    ou si 'force=True' est spécifié.
-    """
     if force or not os.path.exists(DB_FILE) or os.path.getsize(DB_FILE) == 0:
-        print("🔁 Restauration de database.json depuis GitHub...")
         try:
             r = requests.get(GITHUB_RAW_URL)
             r.raise_for_status()
-            data = r.json()
             with open(DB_FILE, "w", encoding="utf-8") as f:
-                json.dump(data, f, indent=2, ensure_ascii=False)
-            print("✅ Base locale restaurée depuis GitHub.")
+                json.dump(r.json(), f, indent=2, ensure_ascii=False)
+            print("✅ Database restored from GitHub.")
         except Exception as e:
-            print(f"❌ Erreur restauration GitHub : {e}")
-    else:
-        print("🟢 database.json déjà présent, aucune restauration nécessaire.")
+            print(f"❌ Restore failed: {e}")
 
-def ensure_valid_json_file():
-    """Vérifie que database.json est un JSON UTF-8 valide, sinon restaure."""
-    if not os.path.exists(DB_FILE):
-        print("❗ database.json n'existe pas encore.")
-        restore_database_from_github(force=True)
-        return
-
-    try:
-        with open(DB_FILE, "r", encoding="utf-8") as f:
-            json.load(f)
-    except (json.JSONDecodeError, UnicodeDecodeError) as e:
-        print(f"❌ database.json invalide au démarrage : {e}")
-        restore_database_from_github(force=True)
-    except Exception as e:
-        print(f"⚠️ Erreur inconnue lors de la vérification de database.json : {e}")
-
-
-# 🔁 Restaurer et vérifier tout de suite
-restore_database_from_github()
-ensure_valid_json_file()
-
+if not os.path.exists(DB_FILE): restore_database_from_github(force=True)
 
 def load_data_local():
-    """Lit localement database.json."""
     try:
         with open(DB_FILE, "r", encoding="utf-8") as f:
             return json.load(f)
-    except (json.JSONDecodeError, UnicodeDecodeError) as e:
-        print(f"❌ database.json corrompu : {e}")
-        return []
-    except Exception as e:
-        print(f"⚠️ Erreur lecture locale : {e}")
-        return []
+    except: return []
 
-
-def load_data_github():
-    """Lit directement depuis GitHub pour l'affichage du dashboard."""
-    try:
-        print("📡 Lecture des données depuis GitHub RAW...")
-        r = requests.get(GITHUB_RAW_URL)
-        r.raise_for_status()
-        return r.json()
-    except Exception as e:
-        print("❌ Erreur lecture GitHub pour affichage :", e)
-        return []
-
-# 💾 Sauvegarde robuste avec restauration si nécessaire
 def save_data(new_entries):
     current = load_data_local()
+    if not isinstance(current, list): current = []
+    
+    current.extend(new_entries)
+    with open(DB_FILE, "w", encoding="utf-8") as f:
+        json.dump(current, f, indent=2, ensure_ascii=False)
+    
+    # Background push logic (optional, non-blocking preferred)
+    try:
+         push_to_github()
+    except: pass
 
-    # ✅ Si le fichier est corrompu ou mal formé, on restaure avant d'ajouter
-    if not isinstance(current, list):
-        print("⚠️ Base locale mal formée. Tentative de restauration.")
-        restore_database_from_github(force=True)
-        current = load_data_local()
+def identify_manufacturer(deveui):
+    if not deveui: return "unknown"
+    deveui = deveui.upper().replace("-", "").replace(":", "")
+    if deveui.startswith("A84041"): return "dragino"
+    if deveui.startswith("24E124"): return "milesight"
+    if deveui.startswith("868000"): return "eastron"
+    if deveui.startswith("8C1F64"): return "eco-adapt"
+    if deveui.startswith("70B3D5E7"): return "watteco"
+    if deveui.startswith("70B3D52D"): return "mclimate"
+    if deveui.startswith("70B3D558"): return "thermokon"
+    return "nexelec" 
 
-    existing_ids = {d.get("id") for d in current}
-    new_data = [d for d in new_entries if d.get("id") not in existing_ids]
-
-    if new_data:
-        current.extend(new_data)
-        with open(DB_FILE, "w", encoding="utf-8") as f:
-            json.dump(current, f, indent=2, ensure_ascii=False)
-        print(f"✅ {len(new_data)} nouvelle(s) donnée(s) sauvegardée(s)")
-        time.sleep(0.2)
-        push_to_github()
-    else:
-        print("ℹ️ Pas de nouvelles données à sauvegarder")
-
-        
-def decode_lorawan_data(encoded_data):
+def decode_lorawan_data(encoded_data, deveui=None):
     try:
         decoded_bytes = convertion.identify_and_process_data(encoded_data)
         decoded_hex = convertion.bytes_to_string(decoded_bytes)
-        product_type = int(decoded_hex[:2], 16)
-
-        if product_type in [0xA9, 0xAA, 0xAB, 0xFF, 0xAD]:
-            return decoder_nexelec.periodic_data_output(decoded_hex)
-        elif product_type in [0xA3, 0xA4, 0xA5, 0xA6, 0xA7]:
-            return decoder_nexelec.periodic_data_output_air(decoded_hex)
+        
+        manuf = identify_manufacturer(deveui)
+        
+        if manuf == "milesight": return decoders["milesight"].decode_milesight(decoded_hex)
+        elif manuf == "dragino": return decoders["dragino"].decode_dragino(decoded_hex)
+        elif manuf == "watteco": return decoders["watteco"].decode_watteco(decoded_hex)
+        elif manuf == "mclimate": return decoders["mclimate"].decode_mclimate(decoded_hex)
+        elif manuf == "eastron": return decoders["eastron"].decode_eastron(decoded_hex)
         else:
-            product_type_2octets = int(decoded_hex[:4], 16)
-            if product_type_2octets in [0x110A, 0x310A]:
-                return decoder_watteco.decode_watteco(decoded_hex)
-            else:
-                return {"error": f"Type inconnu : 0x{product_type_2octets:04X}"}
+            # Fallback
+            try:
+                product_type = int(decoded_hex[:2], 16)
+                if product_type in [0xA9, 0xAA, 0xAB, 0xFF, 0xAD, 0xA3, 0xA4, 0xA5, 0xA6, 0xA7]:
+                     return decoders["nexelec"].decode_uplink(decoded_bytes)
+            except: pass
+            return {"raw": decoded_hex, "manufacturer": "unknown", "info": "No specific decoder found"}
     except Exception as e:
         return {"error": str(e)}
 
-@app.route('/uplink', methods=['GET', 'POST'])
+# --- Routes ---
+
+@app.route('/')
+def home():
+    # Serve the main dashboard
+    return send_file('index.html')
+
+@app.route('/database.json')
+def get_database():
+    return send_file(DB_FILE)
+
+@app.route('/assets/<path:path>')
+def send_assets(path):
+    return send_from_directory('assets', path)
+
+@app.route('/uplink', methods=['POST'])
 def uplink():
-    if request.method == 'POST':
-        event = request.args.get("event", "up")
-        if event == "push":
-            push_to_github()
-            return jsonify({"status": "✅ Sauvegarde GitHub déclenchée"}), 200
+    # Helper to handle ChirpStack webhooks
+    data = request.json
+    if not data: return jsonify({"error": "No data"}), 400
 
-        if event != "up":
-            return jsonify({"status": f"ignored event: {event}"}), 200
-        data = request.json
-        decoded = decode_lorawan_data(data.get("data", ""))
-        paris_tz = timezone('Europe/Paris')
-        data["timestamp"] = datetime.now(paris_tz).strftime('%Y-%m-%d %H:%M:%S %Z')        
-        data["decoded"] = decoded
-        data["id"] = str(uuid.uuid4())
-        print("📡 Donnée reçue + décodée :", data)
-        save_data([data])
-        return jsonify({"status": "ok"}), 200
+    dev_eui = data.get("deviceInfo", {}).get("devEui") or data.get("devEUI")
+    raw_payload = data.get("data")
     
+    decoded = decode_lorawan_data(raw_payload, dev_eui)
     
-    # 🔁 Forcer la restauration depuis GitHub via URL
-    if request.args.get("restore") == "1":
-        restore_database_from_github(force=True)
-        return jsonify({"status": "🔁 Base restaurée depuis GitHub"}), 200
+    paris_tz = timezone('Europe/Paris')
+    entry = {
+        "id": str(uuid.uuid4()),
+        "timestamp": datetime.now(paris_tz).strftime('%Y-%m-%d %H:%M:%S %Z'),
+        "received_at": datetime.now().isoformat(),
+        "devEUI": dev_eui,
+        "deviceInfo": data.get("deviceInfo", {}),
+        "data": raw_payload,
+        "decoded": decoded,
+        "fPort": data.get("fPort"),
+        "txInfo": data.get("txInfo"),
+        "rxInfo": data.get("rxInfo")
+    }
 
+    print(f"📡 Uplink from {dev_eui}: {decoded}")
+    save_data([entry])
+    return jsonify({"status": "stored"}), 200
 
-    rows = load_data_github()
-    fmt = request.args.get("format")
-
-
-
-    if fmt == "json":
-        return jsonify(rows)
-
-    elif fmt == "csv":
-        csv_file = "export.csv"
-        with open(csv_file, "w", newline='') as f:
-            writer = csv.writer(f)
-            writer.writerow(["timestamp", "Nom du capteur", "Product_type", "Fabricant", "data", "decoded"])
-            for row in rows:
-                decoded = row.get("decoded", {})
-                product_type = decoded.get("Product_type", "Inconnu")
-                device_name = row.get("deviceInfo", {}).get("deviceName", "Inconnu")
-                writer.writerow([
-                    row.get("timestamp"),
-                    device_name,
-                    product_type,
-                    decoded.get("Fabricant", "N/A"),
-                    row.get("data"),
-                    json.dumps(decoded, ensure_ascii=False)
-                ])
-
-        return send_file(csv_file, as_attachment=True)
-
-    capteurs = sorted({r.get("deviceInfo", {}).get("deviceName", "Inconnu") for r in rows if "deviceInfo" in r})
-
-    # On récupère toutes les grandeurs présentes dans les données décodées
-    grandeurs = set()
-    for r in rows:
-        decoded = r.get("decoded", {})
-        if isinstance(decoded, dict):
-            grandeurs.update(decoded.keys())
-
-    return render_template("Pageweb.html", rows=rows, capteurs=capteurs, grandeurs=sorted(grandeurs))
-
-
-@app.route('/trame/<id>')
-def detail_trame(id):
-    rows = load_data_github()
-    entry = next((r for r in rows if r.get("id") == id), None)
-    if not entry:
-        return "Trame non trouvée", 404
-    return f"<h2>Détail trame {id}</h2><pre>{json.dumps(entry, indent=2)}</pre>"
-
-
+@app.route('/api/downlink', methods=['POST'])
+def send_downlink():
+    req = request.json
+    dev_eui = req.get('devEui')
+    payload = req.get('data') # Hex or Base64
+    port = req.get('fPort', 1)
     
+    if not dev_eui: return jsonify({"error": "Missing devEui"}), 400
+
+    print(f"⬇️ Downlink Request -> {dev_eui} : {payload}")
+
+    try:
+        import base64
+        # Try to treat as hex first
+        payload_bytes = bytes.fromhex(payload)
+        payload_b64 = base64.b64encode(payload_bytes).decode('utf-8')
+    except:
+        payload_b64 = payload
+
+    url = f"{CHIRPSTACK_API_URL}/api/devices/{dev_eui}/queue"
+    headers = {
+        "Grpc-Metadata-Authorization": f"Bearer {CHIRPSTACK_API_TOKEN}",
+        "Content-Type": "application/json"
+    }
+    body = {
+        "deviceQueueItem": {
+            "confirmed": False,
+            "data": payload_b64,
+            "fPort": port,
+            "object": None
+        }
+    }
+    
+    if "your_token_here" in CHIRPSTACK_API_TOKEN:
+        # Simulation Mode
+        return jsonify({
+            "status": "simulated", 
+            "message": "Token not configured. Downlink simulated.", 
+            "payload": payload_b64
+        }), 200
+
+    try:
+        r = requests.post(url, json=body, headers=headers, timeout=5)
+        if r.status_code in [200, 201]:
+             return jsonify({"status": "queued", "chirpstack_resp": r.json()}), 200
+        else:
+             return jsonify({"error": "ChirpStack Error", "details": r.text}), r.status_code
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000, debug=True)
