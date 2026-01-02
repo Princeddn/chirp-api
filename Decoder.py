@@ -13915,9 +13915,7 @@ class nexelec_air_2():
 
                     gs = int(binstr[47:48], 2)
 
-                    parsed['hardware_status'] = ['OK','Hardware fault'][gs] \
-
-                        if gs < 2 else f'Reserved({gs})'
+                    parsed['hardware_status'] = ['OK','Hardware fault'][gs] if gs < 2 else f'Reserved({gs})'
 
                     # statuts capteurs, tous 3 bits chacun
 
