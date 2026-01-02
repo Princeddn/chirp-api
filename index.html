@@ -1,38 +1,42 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ChirpStack Nexus</title>
-  
+
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-  
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;700&display=swap"
+    rel="stylesheet">
+
   <!-- Icons -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
-  
+
   <!-- Styles -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css">
   <link rel="stylesheet" href="assets/css/style.css">
-  
+
   <!-- Libs -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1"></script>
 </head>
+
 <body class="dark-theme">
 
   <div class="app-layout">
-    
+
     <!-- SIDEBAR -->
     <aside class="sidebar">
       <div class="brand">
         <i class="bi bi-broadcast-pin"></i>
         <span>NEXUS</span>
       </div>
-      
+
       <nav class="nav-menu">
         <button class="nav-item active" onclick="switchView('dashboard')">
           <i class="bi bi-grid-1x2-fill"></i>
@@ -60,7 +64,7 @@
 
     <!-- MAIN CONTENT -->
     <main class="main-content">
-      
+
       <!-- HEADER -->
       <header class="top-bar">
         <h2 id="page-title">Vue Globale</h2>
@@ -151,7 +155,7 @@
               <div class="log-entry system">Initialisation du flux de données...</div>
             </div>
           </div>
-          
+
           <div class="console-controls card">
             <div class="card-header">
               <h3><i class="bi bi-send-fill"></i> Downlink</h3>
@@ -185,17 +189,19 @@
 
       <div id="view-analytics" class="view-section" style="display:none;">
         <div class="card">
-            <div class="card-header">
-                <h3>Analyse Détaillée</h3>
-                <!-- Reprise des filtres existants -->
-                <div class="filters-bar">
-                    <select id="capteur" class="input-dark"><option value="all">Tous</option></select>
-                    <button class="btn-secondary-glow" onclick="updateChart()">Mettre à jour</button>
-                </div>
+          <div class="card-header">
+            <h3>Analyse Détaillée</h3>
+            <!-- Reprise des filtres existants -->
+            <div class="filters-bar">
+              <select id="capteur" class="input-dark">
+                <option value="all">Tous</option>
+              </select>
+              <button class="btn-secondary-glow" onclick="updateChart()">Mettre à jour</button>
             </div>
-            <div class="card-body">
-                <canvas id="chart" height="300"></canvas> <!-- Ancien canvas -->
-            </div>
+          </div>
+          <div class="card-body">
+            <canvas id="chart" height="300"></canvas> <!-- Ancien canvas -->
+          </div>
         </div>
       </div>
 
@@ -205,131 +211,5 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="assets/js/dashboard.js"></script>
 </body>
-</html>
-<html lang="fr">
-<head>
-  <meta charset="UTF-8">
-  <title>Dashboard LoRa</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css">
-  <link rel="stylesheet" href="assets/css/style.css">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1"></script>
-</head>
-<body class="container">
 
-  <h1 class="mb-4">📡 Dashboard Capteurs LoRa</h1>
-  <div id="message-container" class="alert alert-warning d-none" role="alert"></div>
-
-  <!-- Statistiques -->
-  <div class="stats-grid">
-    <div class="stat-card">
-      <div class="stat-value" id="total-sensors">-</div>
-      <div class="stat-label">Capteurs Actifs</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-value" id="total-data">-</div>
-      <div class="stat-label">Données Totales</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-value" id="last-received">-</div>
-      <div class="stat-label">Dernière Réception</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-value" id="status-indicator">🟢</div>
-      <div class="stat-label">Statut Système</div>
-    </div>
-  </div>
-
-  <ul class="nav nav-tabs mb-4" id="myTabs">
-    <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#graphe">📊 Graphe</a></li>
-    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tableau">📋 Tableau</a></li>
-    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#export">📄 Exportation</a></li>
-  </ul>
-
-  <div class="tab-content">
-    <div class="tab-pane fade show active" id="graphe">
-      <div class="mb-3 d-flex flex-wrap align-items-center gap-3">
-        <span class="badge bg-secondary" id="nb-trames">0 trames affichées</span>
-        <span class="text-muted" id="last-update">Dernière mise à jour : --</span>
-        <span class="loading d-none" id="loading-indicator"></span>
-      </div>
-
-      <div class="card p-3 mb-3">
-        <div class="row g-3">
-          <div class="col-lg-3 col-md-6">
-            <label class="form-label">🔧 Nom du capteur :</label>
-            <select id="capteur" class="form-select" onchange="updateGrandeurs()">
-              <option value="all">Tous</option>
-            </select>
-          </div>
-          <div class="col-lg-3 col-md-6">
-            <label class="form-label">📈 Grandeurs :</label>
-            <div id="grandeur-checkboxes" class="d-flex flex-wrap gap-2 mt-2"></div>
-          </div>
-          <div class="col-lg-4 col-md-8">
-            <label class="form-label">🕒 Période :</label>
-            <div class="row g-2">
-              <div class="col-6">
-                <input type="datetime-local" id="start-time" class="form-control">
-              </div>
-              <div class="col-6">
-                <input type="datetime-local" id="end-time" class="form-control">
-              </div>
-            </div>
-            <div class="d-flex mt-2 flex-wrap gap-2">
-              <button class="btn btn-outline-secondary btn-sm" onclick="setToday()">Aujourd'hui</button>
-              <button class="btn btn-outline-secondary btn-sm" onclick="clearDates()">Effacer dates</button>
-            </div>
-          </div>
-          <div class="col-lg-2 col-md-4 d-flex align-items-end">
-            <button class="btn btn-outline-primary w-100" onclick="updateChart()">🔄 Afficher</button>
-          </div>
-        </div>
-        <div class="row mt-3">
-          <div class="col-12 d-flex justify-content-end gap-2 flex-wrap">
-            <button class="btn btn-outline-danger" onclick="resetFilters()">♻️ Réinitialiser</button>
-            <button class="btn btn-outline-info" onclick="exportChart()">📷 Exporter le graphique</button>
-          </div>
-        </div>
-      </div>
-
-      <canvas id="chart" style="max-width: 100%; height: 300px;"></canvas>
-    </div>
-
-    <div class="tab-pane fade" id="tableau">
-      <div class="card p-3">
-        <h4>📋 Données Reçues </h4>
-        <table class="table table-bordered mt-2">
-          <thead class="table-light">
-            <tr>
-              <th>Horodatage</th>
-              <th>Nom du Capteur</th>
-              <th>Type</th>
-              <th>Fabricant</th>
-              <th>Payload</th>
-              <th>Données décodées</th>
-            </tr>
-          </thead>
-          <tbody id="sensor-tbody"></tbody>
-        </table>
-        <nav><ul class="pagination" id="pagination"></ul></nav>
-      </div>
-    </div>
-
-    <div class="tab-pane fade" id="export">
-      <div class="card p-3">
-        <h4>📤 Exportation & Sauvegarde</h4>
-        <div class="d-flex gap-3 flex-wrap">
-          <button class="btn btn-outline-primary" onclick="location.href='database.json'">📄 JSON</button>
-          <button class="btn btn-outline-success" onclick="exportCSV()">⬇️ CSV</button>
-          <button class="btn btn-outline-info" disabled title="Indisponible sur GitHub Pages">💾 Sauvegarde GitHub</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="assets/js/dashboard.js"></script>
-</body>
 </html>
