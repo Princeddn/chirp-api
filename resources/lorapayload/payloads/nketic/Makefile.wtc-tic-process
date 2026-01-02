@@ -1,0 +1,1 @@
+wtc-tic-process_src = tic-tools.c tic-parser.c tic-process.c

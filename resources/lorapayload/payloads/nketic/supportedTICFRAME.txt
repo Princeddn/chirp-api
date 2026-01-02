@@ -1,0 +1,1033 @@
+
+************************************************************
+OUTILS DE TEST:
+Sous Linux ou cigwin dans apps\wtc-tic-process\_tools_
+
+1) Pour tester le parser de trame et la serialisation puis dé-sérialisation
+# ./tictobin.exe -mt MT_NULL  -nc -nfv 2 -v -srtf
+Puis envoyer les trames sur STDIN,
+STDOUT affichera les conversions réalisées
+
+2) Pour convertir une trame serailiser (texte hexa) en trame TIC
+# ./bintotic.exe -mt MT_CBEMM_ICC -v -nz
+Puis envoyer les trames provenant du compteur sélectionné sur STDIN,
+STDOUT affichera la verssion TIC de la trame
+
+************************************************************
+
+........................................................
+Exemples de trames pour les diférents compteurs
+NOTA: wtc-minimal-net or "Linux console" usage supports
+ '<' and '>' instead of STX (\x002) and ETX (\x003)
+........................................................
+
+
+========================================================================
+MT_PMEPMI:
+========================================================================
+PMEPMI_2010 avec checksum
+<
+MESURES1 BT 5 SUP36 A
+DATE 14/06/16 14:59:54 >
+EA_s 316Wh 1
+ER+_s 0varh 5
+ER-_s 0varh 7
+EAPP_s 0VAh '
+EA_i 0Wh =
+ER+_i 0varh +
+ER-_i 0varh -
+EAPP_i 0VAh ]
+PTCOUR1 HPE +
+TARIFDYN INACTIF _
+CONFIG PROD +
+DATEPA1 14/06/16 14:56:04 8
+PA1_s 2TkW \
+PA1_i 0TkW P
+DATEPA2 26/05/16 18:00:00 0
+PA2_s 5kW L
+PA2_i 0kW =
+DATEPA3 26/05/16 17:50:00 5
+PA3_s 5kW M
+PA3_i 0kW >
+DATEPA4 26/05/16 17:40:00 5
+PA4_s 5kW N
+PA4_i 0kW ?
+DATEPA5 26/05/16 17:30:00 5
+PA5_s 5kW O
+PA5_i 0kW @
+DATEPA6 26/05/16 17:20:00 5
+PA6_s 5kW P
+PA6_i 0kW A
+DebP 17/06/13 14:04:00 (
+EAP_s 18311kWh P
+EAP_i 0kWh 8
+ER+P_s 1124kvarh H
+ER-P_s 3kvarh 5
+ER+P_i 0kvarh &
+ER-P_i 0kvarh (
+DebP-1 17/06/13 13:55:23 P
+FinP-1 17/06/13 14:04:00 X
+EAP-1_s 0kWh  
+EAP-1_i 0kWh V
+ER+P-1_s 0kvarh N
+ER-P-1_s 0kvarh P
+ER+P-1_i 0kvarh D
+ER-P-1_i 0kvarh F
+PS 200kVA 7
+PA1MN 5kW T
+PMAX_s 1136kVA U
+PMAX_i 4kVA 4
+TGPHI_s 0,00 J
+TGPHI_i 0,00 @
+MESURES2 BT 5 SUP36 B
+PTCOUR2 HPE ,
+DebP_2 17/06/13 14:04:00 9
+EAP_s2 236336kWh ;
+DebP-1_2 17/06/13 14:04:00 W
+FinP-1_2 17/06/13 14:04:00 )
+EAP-1_s2 218025kWh T
+>
+
+PMEPMI_2013
+<
+ADS	012345678901 x
+MESURES1 BT 5 SUP36 x
+DATE 12/04/16 18:50:35 x
+EA_s 50Wh x
+ER+_s 0varh x
+ER-_s 0varh x
+EAPP_s 0VAh x
+EA_i 0Wh x
+ER+_i 0varh x
+ER-_i 0varh x
+EAPP_i 0VAh x
+PTCOUR1 HPE x
+ETATDYN1 HPE x
+TDYN1CD 12/04/16 18:50:35-HPE x
+TDYN1CF 12/04/16 18:50:35-HPE x
+TDYN1FD 11/05/15 19:40:29-HPC x
+TDYN1FF 12/04/16 18:50:35-HPE x
+TARIFDYN INACTIF x
+CONFIG PROD x
+DATEPA1 12/04/16 18:50:00 x
+PA1_s 5kW x
+PA1_i 0kW x
+DATEPA2 12/04/16 18:40:00 x
+PA2_s 5kW x
+PA2_i 0kW x
+DATEPA3 12/04/16 18:30:00 x
+PA3_s 5kW x
+PA3_i 0kW x
+DATEPA4 12/04/16 18:20:00 x
+PA4_s 5kW x
+PA4_i 0kW x
+DATEPA5 12/04/16 18:10:00 x
+PA5_s 5kW x
+PA5_i 0kW x
+DATEPA6 12/04/16 18:00:00 x
+PA6_s 5kW x
+PA6_i 0kW x
+>
+
+<
+MESURES1 BT 5 SUP36 x
+DATE 12/04/16 18:50:35 x
+EA_s 50Wh x
+ER+_s 0varh x
+ER-_s 0varh x
+EAPP_s 0VAh x
+EA_i 0Wh x
+ER+_i 0varh x
+ER-_i 0varh x
+EAPP_i 0VAh x
+PTCOUR1 HPE x
+>
+
+PMEPMI_2013 AVEC CHECKSUM
+
+<
+ADS 012345678901 F
+MESURES1 BT 5 SUP36 A
+DATE 12/04/16 18/50/35 ^
+EA_s 50Wh <
+ER+_s 0varh 5
+ER-_s 0varh 7
+EAPP_s 0VAh '
+EA_i 0Wh =
+ER+_i 0varh +
+ER-_i 0varh -
+EAPP_i 0VAh ]
+PTCOUR1 HPE +
+TARIFDYN INACTIF _
+ETATDYN1 HPE '
+PREAVIS1 TD-HPH 0
+TDYN1CD 12/04/16 18/50/35-HPE A
+TDYN1CF 12/04/16 18/50/35-HPE C
+TDYN1FD 11/05/15 19/40/29-HPH I
+TDYN1FF 12/04/16 18/50/35-HPE F
+CONFIG PROD +
+DATEPA1 12/04/16 18/50/00 X
+PA1_s 5kW K
+PA1_i 0kW <
+DATEPA2 12/04/16 18/40/00 X
+PA2_s 5kW L
+PA2_i 0kW =
+DATEPA3 12/04/16 18/30/00 X
+PA3_s 5kW M
+PA3_i 0kW >
+DATEPA4 12/04/16 18/20/00 X
+PA4_s 5kW N
+PA4_i 0kW ?
+DATEPA5 12/04/16 18/10/00 X
+PA5_s 5kW O
+PA5_i 0kW @
+DATEPA6 12/04/16 18/00/00 X
+PA6_s 5kW P
+PA6_i 0kW A
+DebP 17/06/13 14/04/00 R
+EAP_s 18273kWh W
+EAP_i 0kWh 8
+ER+P_s 1124kvarh H
+ER-P_s 3kvarh 5
+ER+P_i 0kvarh &
+ER-P_i 0kvarh (
+DebP-1 17/06/13 13/55/23 :
+FinP-1 17/06/13 14/04/00 B
+EAP-1_s 0kWh  
+EAP-1_i 0kWh V
+ER+P-1_s 0kvarh N
+ER-P-1_s 0kvarh P
+ER+P-1_i 0kvarh D
+ER-P-1_i 0kvarh F
+PS 200kVA 7
+PREAVIS DEP 3
+PA1MN 5kW T
+PMAX_s 1136kVA U
+PMAX_i 4kVA 4
+TGPHI_s 0,00 J
+TGPHI_i 0,00 @
+MESURES2 BT 5 SUP36 B
+PTCOUR2 HPE ,
+ETATDYN2 HPH +
+PREAVIS2 TD-HPE .
+TDYN2CD 12/04/16 18/50/35-HPE B
+TDYN2CF 12/04/16 18/50/35-HPE D
+TDYN2FD 11/05/15 19/40/29-HPC E
+TDYN2FF 12/04/16 18/50/35-HPE G
+DebP_2 17/06/13 14/04/00 #
+EAP_s2 236298kWh B
+DebP-1_2 17/06/13 14/04/00 A
+FinP-1_2 17/06/13 14/04/00 S
+EAP-1_s2 218025kWh T
+>
+Trame provenant d'un compteur PMEPMI_2013:
+<
+ADS 031436227994 J
+MESURES1 TJ EJP-HH /
+DATE 01/01/00 00:00:09 [
+EA_s 0Wh G
+ER+_s 0varh 5
+ER-_s 0varh 7
+EAPP_s 0VAh '
+EA_i 0Wh =
+ER+_i 0varh +
+ER-_i 0varh -
+EAPP_i 0VAh ]
+PTCOUR1 HH  >
+TARIFDYN INACTIF _
+ETATDYN1 000 Z
+TDYN1FD 26/05/16 11:00:00-XXX 7
+TDYN1FF 26/05/16 13:00:00-XXX ;
+CONFIG PROD +
+DATEPA1 01/01/00 01:57:23 &
+PA1_s 0TkW Z
+PA1_i 0TkW P
+DATEPA2 01/01/00 01:50:00 [
+PA2_s 0kW G
+PA2_i 0kW =
+DATEPA3 01/01/00 01:40:00 [
+PA3_s 0kW H
+PA3_i 0kW >
+DATEPA4 01/01/00 01:30:00 [
+PA4_s 0kW I
+PA4_i 0kW ?
+DATEPA5 01/01/00 01:20:00 [
+PA5_s 0kW J
+PA5_i 0kW @
+DATEPA6 01/01/00 01:10:00 [
+PA6_s 0kW K
+PA6_i 0kW A
+DebP 25/05/16 09:10:00 *
+EAP_s 0kWh B
+EAP_i 0kWh 8
+ER+P_s 0kvarh 0
+ER-P_s 0kvarh 2
+ER+P_i 0kvarh &
+ER-P_i 0kvarh (
+DebP-1 24/05/16 02:00:00 ?
+FinP-1 25/05/16 09:10:00 Z
+EaP-1_s 0kWh @
+EaP-1_i 0kWh 6
+ER+P-1_s 0kvarh N
+ER-P-1_s 0kvarh P
+ER+P-1_i 0kvarh D
+ER-P-1_i 0kvarh F
+PS 0kVA U
+PA1MN 0kW O
+PMAX_s 0kVA :
+PMAX_i 0kVA 0
+TGPHI_s 0,00 J
+TGPHI_i 0,00 @
+MESURES2 TJ MU 6
+PTCOUR2 HCH "
+ETATDYN2 000 [
+TDYN2FD 26/05/16 18:00:00-XXX ?
+TDYN2FF 26/05/16 20:00:00-XXX :
+DebP_2 25/05/16 09:10:00 ;
+EaP_s2 0kWh T
+DebP-1_2 24/05/16 02:00:00 P
+FinP-1_2 25/05/16 09:10:00 +
+EaP-1_s2 0kWh 2
+>
+
+PMEPMI_2013 SANS CHECKSUM
+
+<
+ADS	012345678901 x
+MESURES1 BT 5 SUP36 A
+DATE 12/04/16 18:50:35 4
+EA_s 50Wh <
+ER+_s 0varh 5
+ER-_s 0varh 7
+EAPP_s 0VAh '
+EA_i 0Wh =
+ER+_i 0varh +
+ER-_i 0varh -
+EAPP_i 0VAh ]
+PTCOUR1 HPE +
+TARIFDYN INACTIF _
+ETATDYN1 HPE x
+PREAVIS1 TD-HPH x
+TDYN1CD 12/04/16 18:50:35-HPE x
+TDYN1CF 12/04/16 18:50:35-HPE x
+TDYN1FD 11/05/15 19:40:29-HPH x
+TDYN1FF 12/04/16 18:50:35-HPE x
+CONFIG PROD +
+DATEPA1 12/04/16 18:50:00 .
+PA1_s 5kW K
+PA1_i 0kW <
+DATEPA2 12/04/16 18:40:00 .
+PA2_s 5kW L
+PA2_i 0kW =
+DATEPA3 12/04/16 18:30:00 .
+PA3_s 5kW M
+PA3_i 0kW >
+DATEPA4 12/04/16 18:20:00 .
+PA4_s 5kW N
+PA4_i 0kW ?
+DATEPA5 12/04/16 18:10:00 .
+PA5_s 5kW O
+PA5_i 0kW @
+DATEPA6 12/04/16 18:00:00 .
+PA6_s 5kW P
+PA6_i 0kW A
+DebP 17/06/13 14:04:00 (
+EAP_s 18273kWh W
+EAP_i 0kWh 8
+ER+P_s 1124kvarh H
+ER-P_s 3kvarh 5
+ER+P_i 0kvarh &
+ER-P_i 0kvarh (
+DebP-1 17/06/13 13:55:23 P
+FinP-1 17/06/13 14:04:00 X
+EAP-1_s 0kWh  
+EAP-1_i 0kWh V
+ER+P-1_s 0kvarh N
+ER-P-1_s 0kvarh P
+ER+P-1_i 0kvarh D
+ER-P-1_i 0kvarh F
+PS 200kVA 7
+PREAVIS DEP x
+PA1MN 5kW T
+PMAX_s 1136kVA U
+PMAX_i 4kVA 4
+TGPHI_s 0,00 J
+TGPHI_i 0,00 @
+MESURES2 BT 5 SUP36 B
+PTCOUR2 HPE ,
+ETATDYN2 HPH x
+PREAVIS2 TD-HPE x
+TDYN2CD 12/04/16 18:50:35-HPE x
+TDYN2CF 12/04/16 18:50:35-HPE x
+TDYN2FD 11/05/15 19:40:29-HPC x
+TDYN2FF 12/04/16 18:50:35-HPE x
+DebP_2 17/06/13 14:04:00 9
+EAP_s2 236298kWh B
+DebP-1_2 17/06/13 14:04:00 W
+FinP-1_2 17/06/13 14:04:00 )
+EAP-1_s2 218025kWh T
+>
+
+========================================================================
+MT_STD:
+========================================================================
+Attention le séparateur est devenu '\t' contrairement auux autres TIC '\s'.
+ET le '\s' est accepté dans les données (valeurs) !!
+
+Sans checksum:
+
+<
+ADSC	012345678901	x
+VTIC	01	x
+DATE	E130506112101		x
+NGTF	0123456789012345	x
+LTARF	5432109876543210	x
+EAST	999999998	x
+>
+
+Avec checksum:
+<
+ADSC	041167003192	/
+VTIC	01	I
+DATE	E100522151327		;
+NGTF	HP-HC           	Q
+LTARF	HEURE PLEINE    	A
+EAST	000000000	O
+EASF01	000000000	"
+EASF02	000000000	#
+EASF03	000000000	$
+EASF04	000000000	%
+EASF05	000000000	&
+EASF06	000000000	'
+EASF07	000000000	(
+EASF08	000000000	)
+EASF09	000000000	*
+EASF10	000000000	"
+EASD01	000000000	 
+EASD02	000000000	!
+EASD03	000000000	"
+EASD04	000000000	#
+IRMS1	000	.
+URMS1	229	G
+PREF	09	H
+PCOUP	09	"
+SINST1	00000	$
+SMAXN	E100521143448	00000	X
+SMAXN-1	E100514110651	00000	.
+CCASN	E100522150000	00000	(
+CCASN-1	E100522143000	00000	H
+UMOY1	H000101000000	000	P
+STGE	00000000	%
+>
+
+ 
+========================================================================
+MT_CT:
+========================================================================
+Sans checksum:
+
+Option BASE
+-----------
+<
+ADCO 123456789012 G
+OPTARIF BASE 0
+BASE 12345678 x
+GAZ 999999 x
+AUTRE 999999 x
+PTEC TH.. $
+MOTDETAT motdet /
+>
+
+Option HCHP
+-----------
+<
+ADCO 123456789012 G
+OPTARIF HCHP 8
+ISOUSC 67 C
+HCHC 12345678 :
+HCHP 12345678 G
+GAZ 9999999 1
+AUTRE 9999999 P
+PTEC TH.. $
+MOTDETAT motdet /
+>
+
+Option EJP
+----------
+<
+ADCO 123456789012 G
+OPTARIF HCHP 8
+ISOUSC 67 C
+EJPHN 12345678 Y
+EJPHPM 12345678 (
+GAZ 9999999 1
+AUTRE 9999999 P
+PTEC PM.. %
+MOTDETAT motdet /
+>
+
+
+========================================================================
+MT_CBEMM_ICC: Retirer l'enreg PAPP pour passer à MT_CBEMM
+========================================================================
+
+Option BASE
+-----------
+<
+ADCO 123456789012 G
+OPTARIF BASE 0
+ISOUSC 67 C
+BASE 123456789 8
+PTEC TH.. $
+IINST 999 2
+ADPS 999 S
+IMAX 999 Z
+PAPP 99999 N
+MOTDETAT motdet /
+>
+
+<
+ADCO 123456789012 G
+OPTARIF BASE 0
+ISOUSC 67 C
+BASE 011259375 ,
+PTEC TH.. $
+IINST 999 2
+ADPS 999 S
+IMAX 999 Z
+PAPP 65534 8
+MOTDETAT motdet /
+>
+
+<
+ADCO 123456789012 G
+OPTARIF BASE 0
+ISOUSC 67 C
+BASE 011259675 /
+PTEC TH.. $
+IINST 999 2
+ADPS 999 S
+IMAX 999 Z
+PAPP 65534 8
+MOTDETAT motdet /
+>
+
+Option HCHP  WORK!!
+-----------
+<
+ADCO 123456789012 G
+OPTARIF HCHP <
+ISOUSC 67 C
+HCHC 123456789 3
+HCHP 999999999 $
+PTEC HN.. ^
+IINST 999 2
+ADPS 999 S
+IMAX 999 Z
+PAPP 99999 N
+HHPHC Y D
+MOTDETAT motdet /
+>
+
+
+
+Option EJP WORK!!!!
+----------
+<
+ADCO 123456789012 G
+OPTARIF EJP. "
+ISOUSC 67 C
+EJPHN 123456789 R
+EJPHPM 999999999 E
+PEJP 30 R
+PTEC PM.. %
+IINST 999 2
+ADPS 999 S
+IMAX 999 Z
+PAPP 99999 N
+MOTDETAT motdet /
+>
+
+Option TEMPO  WORK !!!!!
+------------
+<
+ADCO 123456789012 G
+OPTARIF BBRx #
+ISOUSC 67 C
+BBRHCJB 123456789 J
+BBRHPJB 999999999 ;
+BBRHCJW 999999999 C
+BBRHPJW 999999999 P
+BBRHCJR 000000000 -
+BBRHPJR 123456789 '
+PTEC HCJW X
+DEMAIN BLAN K
+IINST 999 2
+ADPS 999 S
+IMAX 999 Z
+PAPP 99999 N
+MOTDETAT motdet /
+>
+
+========================================================================
+MT_CBETM:
+========================================================================
+
+Trame courte (alerte dépassement):
+----------------------------------
+<
+ADIR1 999 <
+ADIR2 999 =
+ADIR3 999 >
+ADCO 123456789012 G
+IINST1 999 #
+IINST2 999 $
+IINST3 999 %
+>
+
+Option BASE WORK!!!
+-----------
+<
+ADCO 123456789012 G
+OPTARIF BASE 0
+ISOUSC 67 C
+BASE 123456789 8
+PTEC TH.. $
+IINST1 999 #
+IINST2 999 $
+IINST3 999 %
+IMAX1 999 K
+IMAX2 999 L
+IMAX3 999 M
+PMAX 99999 S
+PAPP 99999 N
+MOTDETAT motdet /
+PPOT 0E 8
+>
+
+Option HCHP  WORK!!
+-----------
+<
+ADCO 123456789012 G
+OPTARIF HC.. <
+ISOUSC 67 C
+HCHC 123456789 3
+HCHP 999999999 $
+PTEC HN.. ^
+IINST1 999 #
+IINST2 999 $
+IINST3 999 %
+IMAX1 999 K
+IMAX2 999 L
+IMAX3 999 M
+PMAX 99999 S
+PAPP 99999 N
+HHPHC Y D
+MOTDETAT motdet /
+PPOT 0E 8
+>
+
+<
+ADCO 123456789012 G
+OPTARIF HC.. <
+ISOUSC 67 C
+HCHC 000000010 G
+HCHP 999999999 $
+PTEC HN.. ^
+IINST1 999 #
+IINST2 999 $
+IINST3 999 %
+IMAX1 999 K
+IMAX2 999 L
+IMAX3 999 M
+PMAX 99999 S
+PAPP 99999 N
+HHPHC Y D
+MOTDETAT motdet /
+PPOT 0e X
+>
+
+
+
+
+Option EJP  WORK!!
+----------
+<
+ADCO 123456789012 G
+OPTARIF EJP. "
+ISOUSC 67 C
+EJPHN 123456789 R
+EJPHPM 999999999 E
+PEJP 30 R
+PTEC PM.. %
+IINST1 999 #
+IINST2 999 $
+IINST3 999 %
+IMAX1 999 K
+IMAX2 999 L
+IMAX3 999 M
+PMAX 99999 S
+PAPP 99999 N
+MOTDETAT motdet /
+PPOT 0E 8
+>
+
+Option TEMPO     WORK!!
+------------
+<
+ADCO 123456789012 G
+OPTARIF BBRx #
+ISOUSC 67 C
+BBRHCJB 123456789 J
+BBRHPJB 999999999 ;
+BBRHCJW 999999999 C
+BBRHPJW 999999999 P
+BBRHCJR 999999999 >
+BBRHPJR 999999999 K
+PTEC HCJW X
+DEMAIN BLAN K
+IINST1 999 #
+IINST2 999 $
+IINST3 999 %
+IMAX1 999 K
+IMAX2 999 L
+IMAX3 999 M
+PMAX 99999 S
+PAPP 99999 N
+MOTDETAT motdet /
+PPOT 0E 8
+>
+
+========================================================================
+MT_CJE: 
+========================================================================
+<
+JAUNE 01:02:03:04:aa:bb:01234:255 /
+ENERG 111111:222222:333333:444444:555555:666666 Q
+PERCC 01:02:03:99 3
+PMAXC 11111:22222:33333:44444 Y
+TDEPA 55555:66666:77777:88888 ^
+PERCP 01:02:03:99 @
+PMAXP 11111:22222 /
+PSOUSC 99999:99999:99999:99999 ?
+PSOUSP 99999:99999:99999:99999 L
+FCOU 11:22:33 M
+>
+
+<
+JAUNE 01:02:03:04:aa:bb:01234:255 /
+ENERG 111111:222222:333333:444444 [
+PERCC 01:02:03:99 3
+PMAXC 11111:22222 "
+TDEPA 55555:66666 ?
+PERCP 01:02:03:99 @
+PMAXP 11111:22222 /
+PSOUSC 99999:99999 Q
+PSOUSP 99999:99999 ^
+FCOU 11:22:33 M
+>
+
+===> première vraie trame le 11/04/2014 (from Pedro)
+     ATTENTION le champ "Dépassement" peut contenir "DP" mais aussi 2 <Espaces>
+		 ==> Petite modif de parsing pour tolerer un déspécialisation du spéparateur ici !
+<
+JAUNE 17:15:11:04:11:  :02458:00 "
+ENERG 506588:204650:673884:280225 G
+PERCC 08:04:17:0A @
+PMAXC 02952:00000 %
+TDEPA 00000:00000 H
+PERCP 08:03:17:0A L
+PMAXP 03026:03049 ;
+PSOUSC 04200:04200 C
+PSOUSP 04200:04200 P
+FCOU 17:30:30 O
+>
+
+========================================================================
+MT_ICE:
+========================================================================
+--------------------------------------------------------------------------------
+ATTENTION TRAME VIRTUELLE PROPOSANT période P et période P-1 dans même trame !!!!!
+ET UN PREAVIS DE DEP
+AVEC CHECKSUM 
+
+Pour certaines offres contractuelles, il est possible de trouver 3 chaines préavis les unes après les autres, comme ci-dessous:
+PREAVIS DEP 3
+PREAVIS EJP 9
+PREAVIS HM /
+
+test de changement de contrat
+CONTRAT BASE_A8 N
+
+
+<
+CONTRAT BASE_A5 K
+DATECOUR 24/08/12 00/50/02 K
+EA 9990909Wh B
+ERP 9000300varh 4
+PTCOUR HPH =
+PREAVIS DEP 3
+PREAVIS EJP 9
+DATEPA1 24/08/12 00/01/00 N
+PA1 10kW %
+DATEPA2 24/08/12 00/10/00 O
+PA2 10kW &
+DATEPA3 24/08/12 00/20/00 Q
+PA3 10kW '
+DATEPA4 24/08/12 00/30/00 S
+PA4 10kW (
+DATEPA5 24/08/12 00/40/00 U
+PA5 10kW )
+DATEPA6 24/08/12 00/50/00 W
+PA6 10kW *
+DEBUTp 01/08/12 00/00/00 L
+FINp 01/09/12 00/00/00 6
+CAFp 65535 B
+EApP 9999999kWh ?
+EApHCE 9999999kWh ?
+EApHCH 9999999kWh B
+EApHCD 9999999kWh >
+EApJA 9999999kWh :
+EApHPE 9999999kWh L
+EApHPH 9999999kWh O
+EApHPD 9999999kWh K
+DEBUTp1 01/08/12 00:00:00 S
+FINp1 01/09/12 10:20:30 C
+CAFp1 65535 3
+ERNp1P 9999999kvarh A
+ERNp1HCE 0111111kvarh H
+ERNp1HCH 9999999kvarh D
+ERNp1HCD 9999999kvarh @
+ERNp1JA 9999999kvarh <
+ERNp1HPE 9999999kvarh N
+ERNp1HPH 0000022kvarh V
+ERNp1HPD 0000033kvarh T
+KDC 91% !
+KDCD 80% #
+PSP 0kW %
+PSHPH 1kW 6
+PSHPD 2kW 3
+PSHCH 32767kW A
+PSHCD 32766kW <
+PSHPE 23kW '
+PSHCE 1967kW L
+PSJA 1kW !
+PA1MN 13kW C
+PA10MN 2kW A
+PREA1MN -32767kvar ^
+PREA10MN 32767kvar !
+TGPHI 0,31 <
+U10MN 225V @
+>
+
+--------------------------------------------------------------------------------
+EXEMPLE DE TRAME ICE REELLE AVEC INFO période P
+<
+CONTRAT BASE_A5 K
+DATECOUR 18/12/12 13/42/20 N
+EA 27000Wh >
+ERP 7800varh '
+PTCOUR HPH =
+DATEPA1 18/12/12 13/40/00 S
+PA1 610C.kW L
+DATEPA2 18/12/12 13/30/00 S
+PA2 148C.kW S
+DATEPA3 01/01/92 00/00/00 K
+PA3 0kW 6
+DATEPA4 01/01/92 00/00/00 L
+PA4 0kW 7
+DATEPA5 01/01/92 00/00/00 M
+PA5 0kW 8
+DATEPA6 01/01/92 00/00/00 N
+PA6 0kW 9
+DEBUTp 18/12/12 13/30/00 V
+FINp 01/01/92 00/00/00 6
+CAFp 323 R
+EApP 0kWh  
+EApHCE 0kWh  
+EApHCH 0kWh #
+EApHCD 0kWh _
+EApJA 0kWh [
+EApHPE 0kWh -
+EApHPH 154kWh Z
+EApHPD 0kWh ,
+ERNpP 0kvarh 1
+ERNpHCE 0kvarh 1
+ERNpHCH 0kvarh 4
+ERNpHCD 0kvarh 0
+ERNpJA 0kvarh ,
+ERNpHPE 0kvarh >
+ERNpHPH 0kvarh A
+ERNpHPD 0kvarh =
+KDC 90%  
+KDCD 80% #
+PSP 5600kW @
+PSHPH 5600kW P
+PSHPD 0kW 1
+PSHCH 5600kW C
+PSHCD 0kW $
+PSHPE 5600kW M
+PSHCE 5600kW @
+PSJA 0kW  
+PA1MN 666kW A
+PA10MN 610kW &
+PREA1MN 180kvar A
+PREA10MN 193kvar 5
+TGPHI 0,31 <
+U10MN 18000V  
+>
+
+DEUX Trames successives déclenchant un report sur les EAp1 et les EAp (si report coonfiguré sur les EApet EaP1)
+
+--------------------------------------------------------------------------------
+EXEMPLE DE TRAME ICE REELLE AVEC INFO période P-1
+<
+CONTRAT BASE_A5 K
+DATECOUR 18/12/12 13/43/15 S
+EA 37500Wh D
+ERP 10800varh Q
+PTCOUR HPH =
+DATEPA1 18/12/12 13/40/00 S
+PA1 610C.kW L
+DATEPA2 18/12/12 13/30/00 S
+PA2 148C.kW S
+DATEPA3 01/01/92 00/00/00 K
+PA3 0kW 6
+DATEPA4 01/01/92 00/00/00 L
+PA4 0kW 7
+DATEPA5 01/01/92 00/00/00 M
+PA5 0kW 8
+DATEPA6 01/01/92 00/00/00 N
+PA6 0kW 9
+DEBUTp 18/12/12 13/30/00 V
+FINp 01/01/92 00/00/00 6
+CAFp 323 R
+EApP 0kWh  
+EApHCE 0kWh  
+EApHCH 0kWh #
+EApHCD 0kWh _
+EApJA 0kWh [
+EApHPE 0kWh -
+EApHPH 163kWh Z
+EApHPD 0kWh ,
+DEBUTp1 18/12/12 13/27/56 X
+FINp1 18/12/12 13/30/00 0
+CAFp1 0 [
+EAp1P 0kWh Q
+EAp1HCE 0kWh Q
+EAp1HCH 0kWh T
+EAp1HCD 0kWh P
+EAp1JA 0kWh L
+EAp1HPE 0kWh ^
+EAp1HPH 96kWh  
+EAp1HPD 0kWh ]
+KDC 90%  
+KDCD 80% #
+PSP 5600kW @
+PSHPH 5600kW P
+PSHPD 0kW 1
+PSHCH 5600kW C
+PSHCD 0kW $
+PSHPE 5600kW M
+PSHCE 5600kW @
+PSJA 0kW  
+PA1MN 702kW 8
+PA10MN 610kW &
+PREA1MN 198kvar J
+PREA10MN 193kvar 5
+TGPHI 0,31 <
+U10MN 18000V  
+>
+
+
+BASE A5 avec Injection (4Q): 
+----------------------------
+Attention dans ce cas le capteur ignore les 2 cadrans d'injection (non géré à ce jour)
+<
+CONTRAT BASE_A5 K
+DATECOUR 09/10/14 10/43/25 Q
+EA 328000Wh 2
+ERP 107200varh B
+PTCOUR HPE :
+DATEPA1 09/10/14 10/40/00 P
+PA1 5841kW V
+DATEPA2 09/10/14 10/30/00 P
+PA2 5683kW [
+DATEPA3 09/10/14 10/20/00 P
+PA3 5628kW [
+DATEPA4 09/10/14 10/10/00 P
+PA4 5590kW Z
+DATEPA5 09/10/14 10/00/00 P
+PA5 5594kW _
+DATEPA6 09/10/14 09/50/00 ^
+PA6 5650kW Y
+DEBUTp 01/10/14 02/00/00 I
+FINp 01/01/92 00/00/00 6
+CAFp 5 /
+EApP 261288kWh +
+EApHCE 8489050kWh "
+EApHCH 1844938kWh (
+EApHCD 0kWh _
+EApJA 0kWh [
+EApHPE 13156381kWh Y
+EApHPH 2581446kWh .
+EApHPD 0kWh ,
+ERNpP 0kvarh 1
+ERNpHCE 1kvarh 2
+ERNpHCH 0kvarh 4
+ERNpHCD 0kvarh 0
+ERNpJA 0kvarh ,
+ERNpHPE 4kvarh B
+ERNpHPH 14kvarh 6
+ERNpHPD 0kvarh =
+KDC 90%  
+KDCD 80% #
+PSP 5000kW :
+PSHPH 5000kW J
+PSHPD 0kW 1
+PSHCH 5000kW =
+PSHCD 0kW $
+PSHPE 7000kW I
+PSHCE 7000kW <
+PSJA 0kW  
+PA1MN 5760kW 1
+PA10MN 5842kW "
+PREA1MN 1896kvar @
+PREA10MN 1927kvar +
+TGPHI 0,32 =
+Appli INJECTION Y
+U10MN 20400V ]
+DATECOUR 09/10/14 10/43/35 R
+EA 0Wh 5
+ERP 0varh H
+ERN 0varh F
+PTCOUR 4 Q
+DATEP1 09/10/14 10/40/00 O
+P1 0kW 3
+DATEP2 09/10/14 10/30/00 O
+P2 0kW 4
+DATEP3 09/10/14 10/20/00 O
+P3 0kW 5
+DATEP4 09/10/14 10/10/00 O
+P4 0kW 6
+DATEP5 09/10/14 10/00/00 O
+P5 0kW 7
+DATEP6 09/10/14 09/50/00 ]
+P6 0kW 8
+DEBUTp 01/10/14 02/00/00 I
+EApCour 1kWh *
+ERPpCour 1kvarh =
+ERNpCour 2kvarh <
+DEBUTp1 01/09/14 02/00/00 B
+PRapCour 5000kW S
+IPA1MN 0kW X
+IPATMN 0kW ;
+IPREA1MN 0kvar !
+IPREATMN 0kvar D
+I1 0,000A '
+I2 0,000A (
+I3 0,000A )
+TGPHI 0,00 8
+>
+
+
