@@ -52,9 +52,15 @@ def save_data(new_entries):
     with open(DB_FILE, "w", encoding="utf-8") as f:
         json.dump(current, f, indent=2, ensure_ascii=False)
     
-    try:
-         pass # push_to_github() # Disabled for speed
-    except: pass
+    # try:
+    #      # Use values from config.json (or defaults)
+    #      # Config keys: GITHUB_REPO, GITHUB_BRANCH, GITHUB_PAT (or CHIRPSTACK token if reused? No, usually specific).
+    #      # For now, let's assume the user puts a GH Token in config if they want backup.
+    #      # But config.json defined earlier only has CHIRPSTACK...
+    #      # User prompt added inputs for Repo and Branch, but no Token field for GH?
+    #      # Check index.html: only CHIRPSTACK Token.
+    #      pass 
+    # except: pass
 
 def decode_lorawan_data(encoded_data, deveui=None):
     # Delegate everything to the dynamic decoder

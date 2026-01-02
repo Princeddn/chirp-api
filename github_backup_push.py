@@ -2,17 +2,14 @@ import os
 import subprocess
 from datetime import datetime
 
-def push_to_github():
-    token = os.getenv("GITHUB_PAT")
-    user = os.getenv("GIT_USER")
-    email = os.getenv("GIT_EMAIL")
-    branch = os.getenv("GIT_BRANCH", "data-backup")
-
-    if not token or not user or not email:
-        print("❌ GITHUB_PAT, GIT_USER ou GIT_EMAIL non défini dans les variables d'environnement.")
+def push_to_github(repo_name, branch, token):
+    if not token or not repo_name:
+        print("❌ push_to_github: Token or Repo not provided override.")
+        # Fallback to envs if needed, or just return
         return
 
-    repo_url = f"https://{token}@github.com/{user}/chirp-api.git"
+    # Assuming repo_name is "User/Repo"
+    repo_url = f"https://{token}@github.com/{repo_name}.git"
 
     try:
         # Configuration Git
