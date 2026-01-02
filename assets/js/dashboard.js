@@ -129,44 +129,75 @@ function renderWidgets() {
     const decoded = lastPacket.decoded || {};
     const metrics = [];
 
-    // Common keys to look for
-    const formatValue = (v, unit) => {
-      if (typeof v === 'number') return Math.round(v * 100) / 100 + unit;
-      return v;
+    // Common keys mapping to icons/labels
+    const keyMap = {
+      'temperature': { icon: 'bi-thermometer-half', unit: '°C', label: 'Température' },
+      'humidity': { icon: 'bi-droplet', unit: '%', label: 'Humidité' },
+      'co2': { icon: 'bi-cloud-haze2', unit: 'ppm', label: 'CO2' },
+      'pressure': { icon: 'bi-speedometer', unit: 'hPa', label: 'Pression' },
+      'illuminance': { icon: 'bi-sun', unit: 'Lux', label: 'Luminosité' },
+      'motion': { icon: 'bi-person-walking', unit: '', label: 'Mouvement' },
+      'leak': { icon: 'bi-water', unit: '', label: 'Fuite' },
+      'battery_voltage': { icon: 'bi-battery-charging', unit: 'V', label: 'Tension' },
+      'tvoc': { icon: 'bi-virus', unit: 'ppb', label: 'TVOC' },
+      'pm2_5': { icon: 'bi-wind', unit: 'µg/m³', label: 'PM2.5' }
     };
 
-    if (decoded.temperature !== undefined) {
-      let val = decoded.temperature;
-      if (typeof val === 'object') val = val.value;
-      metrics.push({ label: 'Météo', value: formatValue(val, '°C'), icon: 'bi-thermometer-half' });
-    }
-    if (decoded.humidity !== undefined) {
-      let val = decoded.humidity;
-      if (typeof val === 'object') val = val.value;
-      metrics.push({ label: 'Humidité', value: formatValue(val, '%'), icon: 'bi-moisture' });
-    }
-    if (decoded.co2 !== undefined) {
-      let val = decoded.co2;
-      if (typeof val === 'object') val = val.value;
-      metrics.push({ label: 'Qualité Air', value: formatValue(val, ' ppm'), icon: 'bi-cloud-haze2' });
-    }
-    if (decoded.pressure !== undefined) {
-      let val = decoded.pressure;
-      if (typeof val === 'object') val = val.value;
-      metrics.push({ label: 'Pression', value: formatValue(val, ' hPa'), icon: 'bi-speedometer' });
-    }
-    // General fallback for numeric values if not specific
-    if (metrics.length === 0) {
-      Object.keys(decoded).forEach(k => {
-        if (k === 'battery' || k === 'Product_type' || k === 'error') return;
-        const v = decoded[k];
-        if (typeof v === 'number' || (typeof v === 'object' && typeof v.value === 'number')) {
-          let val = typeof v === 'object' ? v.value : v;
-          let unit = typeof v === 'object' && v.unit ? ' ' + v.unit : '';
-          if (metrics.length < 4) metrics.push({ label: k, value: formatValue(val, unit), icon: 'bi-activity' });
-        }
-      });
-    }
+    // Helper to extract value and unit
+    const extractVal = (k, v) => {
+      let val = v;
+      let unit = '';
+      if (typeof v === 'object' && v !== null) {
+        val = v.value !== undefined ? v.value : JSON.stringify(v);
+        unit = v.unit || '';
+      }
+
+      // Auto-detect unit from keyMap if not present
+      if (!unit && keyMap[k.toLowerCase()]) unit = keyMap[k.toLowerCase()].unit;
+
+      return { val, unit };
+    };
+
+    // 1. First pass: Check for Known Keys (Case insensitive)
+    Object.keys(decoded).forEach(key => {
+      const lowerKey = key.toLowerCase();
+      if (key === 'battery' || key === 'error' || key === '_driver' || key === 'Product_type') return;
+
+      // If it looks like a known metric
+      const mapEntry = Object.values(keyMap).find((entry, idx) => Object.keys(keyMap)[idx] === lowerKey) || keyMap[lowerKey];
+
+      if (mapEntry) {
+        const { val, unit } = extractVal(key, decoded[key]);
+        metrics.push({
+          label: mapEntry.label,
+          value: (typeof val === 'number' ? Math.round(val * 100) / 100 : val) + (unit ? ' ' + unit : ''),
+          icon: mapEntry.icon
+        });
+      }
+    });
+
+    // 2. Second pass: Add any other numeric/meaningful value not yet added (up to limit)
+    const existingLabels = metrics.map(m => m.label.toLowerCase()); // Check against French labels
+    Object.keys(decoded).forEach(key => {
+      if (metrics.length >= 6) return; // Limit total metrics per card for layout
+      if (key === 'battery' || key === 'error' || key === '_driver' || key === 'Product_type') return;
+
+      const lowerKey = key.toLowerCase();
+      // Check if already handled by exact key match in pass 1
+      if (keyMap[lowerKey]) return;
+
+      const { val, unit } = extractVal(key, decoded[key]);
+
+      // Add if it's a number or short string
+      if (typeof val === 'number' || (typeof val === 'string' && val.length < 15)) {
+        metrics.push({
+          label: key.charAt(0).toUpperCase() + key.slice(1),
+          value: (typeof val === 'number' ? Math.round(val * 100) / 100 : val) + (unit ? ' ' + unit : ''),
+          icon: 'bi-activity'
+        });
+      }
+    });
+
 
     // Status
     const dt = luxon.DateTime.fromJSDate(lastPacket.timestamp_obj);
