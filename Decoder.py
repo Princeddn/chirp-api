@@ -9066,6 +9066,105 @@ globals.COMPATIBILITY.append(woMaster_LR144)
 
 # --- UNIFIED DECODER CLASS ---
 
+# --- GENERIC DECODERS (JS REPLACEMENTS) ---
+
+class GenericIPSODecoder:
+    def __init__(self):
+        self.name = 'milesight_generic'
+    
+    def parse(self, data, device):
+        # Implementation of standard IPSO / Milesight TLV decoding
+        # Replaces functionality of milesight_AM103.js, EM300.js, etc.
+        payload_hex = data.get('payload', '')
+        bytes_data = utils.hexarray_from_string(payload_hex)
+        parsed = {}
+        
+        i = 0
+        while i < len(bytes_data):
+            try:
+                channel_id = bytes_data[i]
+                channel_type = bytes_data[i+1]
+                i += 2
+                
+                # IPSO / Milesight Types
+                if channel_id == 0xFF and channel_type == 0x01: # IPSO Version
+                    parsed['ipso_version'] = f"v{bytes_data[i]>>4}.{bytes_data[i]&0x0F}"
+                    i += 1
+                elif channel_id == 0xFF and channel_type == 0x09: # Hardware Ver
+                    parsed['hardware_version'] = f"v{bytes_data[i]}.{bytes_data[i+1]>>4}"
+                    i += 2
+                elif channel_id == 0xFF and channel_type == 0x0A: # Firmware Ver
+                    parsed['firmware_version'] = f"v{bytes_data[i]}.{bytes_data[i+1]}"
+                    i += 2
+                elif channel_type == 0x75: # Battery Level
+                    parsed['battery'] = bytes_data[i]
+                    i += 1
+                elif channel_type == 0x67: # Temperature
+                    val = struct.unpack('<h', bytes(bytes_data[i:i+2]))[0]
+                    parsed['temperature'] = val / 10.0
+                    i += 2
+                elif channel_type == 0x68: # Humidity
+                    parsed['humidity'] = bytes_data[i] / 2.0
+                    i += 1
+                elif channel_type == 0x7D: # CO2
+                    parsed['co2'] = struct.unpack('<H', bytes(bytes_data[i:i+2]))[0]
+                    i += 2
+                elif channel_type == 0x73: # Pressure
+                    parsed['pressure'] = struct.unpack('<H', bytes(bytes_data[i:i+2]))[0] / 10.0
+                    i += 2
+                elif channel_type == 0x65: # Illuminance
+                    parsed['illuminance'] = struct.unpack('<H', bytes(bytes_data[i:i+2]))[0]
+                    i += 2
+                elif channel_type == 0x88: # Global GPS
+                    lat = struct.unpack('<i', bytes(bytes_data[i:i+4]))[0] / 1000000
+                    lon = struct.unpack('<i', bytes(bytes_data[i+4:i+8]))[0] / 1000000
+                    i += 8
+                    parsed['latitude'] = lat
+                    parsed['longitude'] = lon
+                elif channel_type == 0x00: # Digital Input
+                     parsed[f'digital_in_{channel_id}'] = bytes_data[i]
+                     i += 1
+                else:
+                    # Unknown type, skip 1 byte (heuristic) or break to avoid loop
+                    # Best effort: skip remaining
+                    break
+            except Exception as e:
+                parsed['error_decoding'] = str(e)
+                break
+                
+        data['parsed'] = parsed
+        return data
+
+globals.COMPATIBILITY.append(GenericIPSODecoder)
+
+class GenericDraginoDecoder:
+    def __init__(self):
+        self.name = 'dragino_generic'
+    
+    def parse(self, data, device):
+        # Basic decoding for common Dragino payloads (LHT65, LGT92 etc)
+        # Often Byte 0-1 are Volt, Byte 2-3 Temp, Byte 4-5 Hum...
+        # This is a heuristic fallback
+        payload_hex = data.get('payload', '')
+        bytes_data = utils.hexarray_from_string(payload_hex)
+        parsed = {}
+        
+        try:
+             # Basic LHT65/LDS01 structure often seen
+             if len(bytes_data) > 4:
+                 # Battery often at beginning or in specific bytes
+                 # Check for typical Dragino patterns (often voltage is high)
+                 pass
+             parsed['raw_data_count'] = len(bytes_data)
+        except: pass
+        
+        data['parsed'] = parsed
+        return data
+
+# globals.COMPATIBILITY.append(GenericDraginoDecoder) # Optional, can enable if needed
+
+# --- UNIFIED DECODER CLASS ---
+
 class UnifiedDecoder:
     def __init__(self):
         self.drivers = {}
@@ -9074,15 +9173,12 @@ class UnifiedDecoder:
         self._load_analysis()
 
     def _load_drivers(self):
-        # globals.COMPATIBILITY has been populated by the execution of the classes above
         print(f"🔌 Registering {len(globals.COMPATIBILITY)} internal drivers...")
         for cls in globals.COMPATIBILITY:
             try:
                 instance = cls()
-                # Some drivers set self.name
                 name = getattr(instance, 'name', cls.__name__)
                 self.drivers[name.lower()] = instance
-                # Also help with simple class name mapping if different
                 self.drivers[cls.__name__.lower()] = instance
             except Exception as e:
                 print(f"⚠️ Failed to register {cls}: {e}")
@@ -9095,32 +9191,45 @@ class UnifiedDecoder:
             self.analysis = {}
 
     def find_driver(self, deveui):
-        if not deveui: return None
+        if not deveui: return None, "No DevEUI"
         clean = deveui.upper().replace("-", "").replace(":", "")
         
+        best_model = None
         # 1. Look in analysis JSON
         models = self.analysis.get("models_by_prefix", {})
-        best = None
         for length in range(12, 5, -1):
             if clean[:length] in models:
-                best = models[clean[:length]]
+                best_model = models[clean[:length]]
                 break
         
-        if best:
+        driver = None
+        info = ""
+        
+        if best_model:
             # Map "WS301" -> "milesight_ws301"
-            target = best.lower().replace("-", "").replace(" ", "")
+            target = best_model.lower().replace("-", "").replace(" ", "")
             for dname in self.drivers:
                 if target in dname:
-                    return self.drivers[dname]
+                    driver = self.drivers[dname]
+                    info = f"Found driver for {best_model}"
+                    break
         
-        # 2. Hardcoded / Heuristics fallback (if analysis fails)
-        if clean.startswith("A84041"): return self.drivers.get("dragino_lht65")
-        if clean.startswith("24E124"): return self.drivers.get("milesight_ws301") # Generic fallback
-        
-        return None
+        # 2. Manufacturer Fallback if specific model driver not found
+        if not driver:
+            if clean.startswith("24E124"): # Milesight
+                driver = self.drivers.get("milesight_generic")
+                info = "Fallback to Generic Milesight"
+            elif clean.startswith("A84041"): # Dragino
+                 driver = self.drivers.get("dragino_lht65") # Fallback to LHT65 as it is common
+                 info = "Fallback to Dragino LHT65"
+            elif clean.startswith("868000"): # Eastron
+                 driver = self.drivers.get("eastron_sdm630")
+                 info = "Fallback to Eastron"
+            
+        return driver, info
 
     def decode_uplink(self, payload_hex, deveui=None):
-        driver = self.find_driver(deveui)
+        driver, info = self.find_driver(deveui)
         
         # Prepare Jeedom-style data wrapper
         data = {'payload': payload_hex}
@@ -9132,10 +9241,11 @@ class UnifiedDecoder:
                 res = driver.parse(data, None)
                 parsed = res.get('parsed', {})
                 parsed['_driver'] = driver.name
+                parsed['_info'] = info
             except Exception as e:
                 parsed = {"error": str(e), "driver": driver.name}
         else:
-             parsed = {"error": "No driver found", "raw": payload_hex}
+             parsed = {"error": "No driver found", "raw": payload_hex, "info": info}
              
         return parsed
 
