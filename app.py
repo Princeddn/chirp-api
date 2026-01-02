@@ -3,7 +3,7 @@ from datetime import datetime
 import json, os, csv, uuid, time
 from github_backup_push import push_to_github
 import requests
-from Decoder import BaseDecoder, NexelecDecoder, WattecoDecoder, MilesightDecoder, DraginoDecoder, EastronDecoder, MClimateDecoder
+from Decoder import jeedom_decoder
 from pytz import timezone
 
 app = Flask(__name__, static_folder='assets')
@@ -11,17 +11,6 @@ DB_FILE = "database.json"
 GITHUB_RAW_URL = "https://raw.githubusercontent.com/Princeddn/chirp-api/data-backup/database.json"
 CHIRPSTACK_API_URL = os.getenv("CHIRPSTACK_API_URL", "https://chirpstack.example.com")
 CHIRPSTACK_API_TOKEN = os.getenv("CHIRPSTACK_API_TOKEN", "your_token_here")
-
-# Initialize Decoders
-convertion = BaseDecoder()
-decoders = {
-    "nexelec": NexelecDecoder(),
-    "watteco": WattecoDecoder(),
-    "milesight": MilesightDecoder(),
-    "dragino": DraginoDecoder(),
-    "eastron": EastronDecoder(),
-    "mclimate": MClimateDecoder()
-}
 
 def restore_database_from_github(force=False):
     if force or not os.path.exists(DB_FILE) or os.path.getsize(DB_FILE) == 0:
@@ -50,45 +39,14 @@ def save_data(new_entries):
     with open(DB_FILE, "w", encoding="utf-8") as f:
         json.dump(current, f, indent=2, ensure_ascii=False)
     
-    # Background push logic (optional, non-blocking preferred)
     try:
-         push_to_github()
+         pass # push_to_github() # Disabled for speed
     except: pass
 
-def identify_manufacturer(deveui):
-    if not deveui: return "unknown"
-    deveui = deveui.upper().replace("-", "").replace(":", "")
-    if deveui.startswith("A84041"): return "dragino"
-    if deveui.startswith("24E124"): return "milesight"
-    if deveui.startswith("868000"): return "eastron"
-    if deveui.startswith("8C1F64"): return "eco-adapt"
-    if deveui.startswith("70B3D5E7"): return "watteco"
-    if deveui.startswith("70B3D52D"): return "mclimate"
-    if deveui.startswith("70B3D558"): return "thermokon"
-    return "nexelec" 
-
 def decode_lorawan_data(encoded_data, deveui=None):
-    try:
-        decoded_bytes = convertion.identify_and_process_data(encoded_data)
-        decoded_hex = convertion.bytes_to_string(decoded_bytes)
-        
-        manuf = identify_manufacturer(deveui)
-        
-        if manuf == "milesight": return decoders["milesight"].decode_milesight(decoded_hex)
-        elif manuf == "dragino": return decoders["dragino"].decode_dragino(decoded_hex)
-        elif manuf == "watteco": return decoders["watteco"].decode_watteco(decoded_hex)
-        elif manuf == "mclimate": return decoders["mclimate"].decode_mclimate(decoded_hex)
-        elif manuf == "eastron": return decoders["eastron"].decode_eastron(decoded_hex)
-        else:
-            # Fallback
-            try:
-                product_type = int(decoded_hex[:2], 16)
-                if product_type in [0xA9, 0xAA, 0xAB, 0xFF, 0xAD, 0xA3, 0xA4, 0xA5, 0xA6, 0xA7]:
-                     return decoders["nexelec"].decode_uplink(decoded_bytes)
-            except: pass
-            return {"raw": decoded_hex, "manufacturer": "unknown", "info": "No specific decoder found"}
-    except Exception as e:
-        return {"error": str(e)}
+    # Delegate everything to the dynamic decoder
+    return jeedom_decoder.decode_uplink(encoded_data, deveui)
+
 
 # --- Routes ---
 
