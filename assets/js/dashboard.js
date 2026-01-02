@@ -57,6 +57,7 @@ async function fetchData() {
 
     updateGlobalStats();
     updateDevicesList();
+    renderWidgets();
     initOverviewChart();
     renderTable(1);
     populateSensorSelect();
@@ -103,6 +104,114 @@ function animateValue(id, start, end, duration) {
     if (progress < 1) window.requestAnimationFrame(step);
   };
   window.requestAnimationFrame(step);
+}
+
+// --- Widgets (New) ---
+function renderWidgets() {
+  const container = document.getElementById('sensor-widgets');
+  if (!container) return;
+
+  container.innerHTML = '';
+  const uniqueSensors = [...new Set(allData.map(d => d.device_name))];
+
+  if (uniqueSensors.length === 0) {
+    container.innerHTML = '<div class="text-muted p-3">Aucun capteur détecté.</div>';
+    return;
+  }
+
+  uniqueSensors.forEach(sensor => {
+    const sensorData = allData.filter(d => d.device_name === sensor);
+    const lastPacket = sensorData[sensorData.length - 1];
+    if (!lastPacket) return;
+
+    // Try to identify metrics of interest
+    const decoded = lastPacket.decoded || {};
+    const metrics = [];
+
+    // Common keys to look for
+    const formatValue = (v, unit) => {
+      if (typeof v === 'number') return Math.round(v * 100) / 100 + unit;
+      return v;
+    };
+
+    if (decoded.temperature !== undefined) {
+      let val = decoded.temperature;
+      if (typeof val === 'object') val = val.value;
+      metrics.push({ label: 'Météo', value: formatValue(val, '°C'), icon: 'bi-thermometer-half' });
+    }
+    if (decoded.humidity !== undefined) {
+      let val = decoded.humidity;
+      if (typeof val === 'object') val = val.value;
+      metrics.push({ label: 'Humidité', value: formatValue(val, '%'), icon: 'bi-moisture' });
+    }
+    if (decoded.co2 !== undefined) {
+      let val = decoded.co2;
+      if (typeof val === 'object') val = val.value;
+      metrics.push({ label: 'Qualité Air', value: formatValue(val, ' ppm'), icon: 'bi-cloud-haze2' });
+    }
+    if (decoded.pressure !== undefined) {
+      let val = decoded.pressure;
+      if (typeof val === 'object') val = val.value;
+      metrics.push({ label: 'Pression', value: formatValue(val, ' hPa'), icon: 'bi-speedometer' });
+    }
+    // General fallback for numeric values if not specific
+    if (metrics.length === 0) {
+      Object.keys(decoded).forEach(k => {
+        if (k === 'battery' || k === 'Product_type' || k === 'error') return;
+        const v = decoded[k];
+        if (typeof v === 'number' || (typeof v === 'object' && typeof v.value === 'number')) {
+          let val = typeof v === 'object' ? v.value : v;
+          let unit = typeof v === 'object' && v.unit ? ' ' + v.unit : '';
+          if (metrics.length < 4) metrics.push({ label: k, value: formatValue(val, unit), icon: 'bi-activity' });
+        }
+      });
+    }
+
+    // Status
+    const dt = luxon.DateTime.fromJSDate(lastPacket.timestamp_obj);
+    const isOnline = dt.diffNow('hours').hours > -24; // Online if seen in last 24h
+
+    let batteryHTML = '';
+    if (decoded.battery !== undefined || lastPacket.battery !== undefined) {
+      let bat = decoded.battery;
+      if (typeof bat === 'object') bat = bat.value;
+      if (bat === undefined) bat = lastPacket.battery;
+
+      let color = 'text-success';
+      if (bat < 20) color = 'text-danger';
+      else if (bat < 50) color = 'text-warning';
+
+      batteryHTML = `<span class="${color}"><i class="bi bi-battery-full"></i> ${bat}%</span>`;
+    }
+
+    const card = document.createElement('div');
+    card.className = 'sensor-widget';
+    card.innerHTML = `
+            <div class="header">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-cpu-fill text-primary"></i>
+                    <span class="device-name">${sensor}</span>
+                </div>
+                ${isOnline ? '<span class="status-badge">En ligne</span>' : '<span class="status-badge" style="background:rgba(239, 68, 68, 0.1); color:#ef4444">Hors ligne</span>'}
+            </div>
+            
+            <div class="metrics">
+                ${metrics.map(m => `
+                    <div class="metric-item">
+                        <span class="label"><i class="bi ${m.icon}"></i> ${m.label}</span>
+                        <span class="value">${m.value}</span>
+                    </div>
+                `).join('')}
+                ${metrics.length === 0 ? '<span class="text-muted small">Aucune donnée métrique détectée</span>' : ''}
+            </div>
+
+            <div class="footer">
+                <span><i class="bi bi-clock"></i> ${dt.toRelative()}</span>
+                ${batteryHTML}
+            </div>
+        `;
+    container.appendChild(card);
+  });
 }
 
 // --- Devices Management ---
