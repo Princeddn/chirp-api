@@ -18,3 +18,5 @@ Visitez: https://princeddn.github.io/chirp-api/
 - `main`: Page GitHub Pages
 - `data-backup`: Données JSON
 - `beta`: Code API Flask
+
+*Dernière vérification : 02/01/2026*
