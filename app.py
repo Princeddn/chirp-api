@@ -67,7 +67,7 @@ def save_data(new_entries):
 
 def decode_lorawan_data(encoded_data, deveui=None):
     # Delegate everything to the dynamic decoder
-    return jeedom_decoder.decode_uplink(encoded_data, deveui)
+    return unified_decoder.decode_uplink(encoded_data, deveui)
 
 
 # --- Routes ---
