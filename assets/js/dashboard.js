@@ -575,6 +575,7 @@ async function loadConfig() {
       document.getElementById('conf-chirpstack-token').value = config.CHIRPSTACK_API_TOKEN || '';
       document.getElementById('conf-github-repo').value = config.GITHUB_REPO || '';
       document.getElementById('conf-github-branch').value = config.GITHUB_BRANCH || '';
+      document.getElementById('conf-github-token').value = config.GITHUB_PAT || '';
     }
   } catch (e) {
     console.error("Failed to load config", e);
@@ -586,7 +587,8 @@ async function saveConfig() {
     CHIRPSTACK_API_URL: document.getElementById('conf-chirpstack-url').value,
     CHIRPSTACK_API_TOKEN: document.getElementById('conf-chirpstack-token').value,
     GITHUB_REPO: document.getElementById('conf-github-repo').value,
-    GITHUB_BRANCH: document.getElementById('conf-github-branch').value
+    GITHUB_BRANCH: document.getElementById('conf-github-branch').value,
+    GITHUB_PAT: document.getElementById('conf-github-token').value
   };
 
   try {
@@ -599,6 +601,27 @@ async function saveConfig() {
     if (res.ok) alert("Configuration sauvegardée !");
     else alert("Erreur: " + data.error);
   } catch (e) {
+    alert("Erreur réseau: " + e.message);
+  }
+}
+
+async function triggerBackup() {
+  if (!confirm("Voulez-vous lancer une sauvegarde immédiate vers GitHub ?")) return;
+
+  addConsoleLog('system', "Lancement de la sauvegarde GitHub...");
+  try {
+    const res = await fetch('/api/backup', { method: 'POST' });
+    const data = await res.json();
+
+    if (res.ok) {
+      addConsoleLog('system', "Sauvegarde réussie !");
+      alert("Sauvegarde réussie !");
+    } else {
+      addConsoleLog('system', "Erreur sauvegarde: " + data.error);
+      alert("Erreur: " + data.error);
+    }
+  } catch (e) {
+    addConsoleLog('system', "Erreur réseau sauvegarde: " + e.message);
     alert("Erreur réseau: " + e.message);
   }
 }

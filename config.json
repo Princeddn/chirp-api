@@ -1,6 +1,6 @@
 {
-    "CHIRPSTACK_API_URL": "https://chirpstack.example.com",
-    "CHIRPSTACK_API_TOKEN": "your_token_here",
+    "CHIRPSTACK_API_URL": "http://lnschirpstack.istic.univ-rennes1.fr:8080",
+    "CHIRPSTACK_API_TOKEN": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJjaGlycHN0YWNrIiwiaXNzIjoiY2hpcnBzdGFjayIsInN1YiI6IjFhYmRhOGE5LWYxYzgtNGM4ZS04NGEyLTZiYzI3ZGFlZTVjMiIsInR5cCI6ImtleSJ9.1GdUPUDZ34dzYD4EakD57oUKM7cRZr68szo9kRGU-wU",
     "GITHUB_REPO": "Princeddn/chirp-api",
     "GITHUB_BRANCH": "data-backup"
 }

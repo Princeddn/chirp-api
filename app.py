@@ -23,6 +23,9 @@ def load_config():
 config = load_config()
 CHIRPSTACK_API_URL = config.get("CHIRPSTACK_API_URL", os.getenv("CHIRPSTACK_API_URL", "https://chirpstack.example.com"))
 CHIRPSTACK_API_TOKEN = config.get("CHIRPSTACK_API_TOKEN", os.getenv("CHIRPSTACK_API_TOKEN", "your_token_here"))
+GITHUB_REPO = config.get("GITHUB_REPO", os.getenv("GITHUB_REPO", "Princeddn/chirp-api"))
+GITHUB_BRANCH = config.get("GITHUB_BRANCH", os.getenv("GITHUB_BRANCH", "data-backup"))
+GITHUB_PAT = config.get("GITHUB_PAT", os.getenv("GITHUB_PAT", ""))
 
 
 def restore_database_from_github(force=False):
@@ -161,6 +164,22 @@ def send_downlink():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route('/api/backup', methods=['POST'])
+def trigger_backup():
+    if not GITHUB_PAT or "your_token" in GITHUB_PAT:
+        return jsonify({"error": "GitHub Token not configured"}), 400
+        
+    try:
+        # Save current data to disk first just in case
+        save_data([]) 
+        
+        print("🚀 Triggering GitHub Backup...")
+        push_to_github(GITHUB_REPO, GITHUB_BRANCH, GITHUB_PAT)
+        return jsonify({"status": "success", "message": "Backup started/completed"}), 200
+    except Exception as e:
+        print(f"❌ Backup failed: {e}")
+        return jsonify({"error": str(e)}), 500
+
 @app.route('/api/config', methods=['GET'])
 def get_config():
     # Return config but mask the token for security in UI if desired, 
@@ -172,14 +191,26 @@ def get_config():
 def update_config():
     try:
         new_config = request.json
-        # Basic validation could go here
+        
+        # Validation
+        if "CHIRPSTACK_API_URL" in new_config and new_config["CHIRPSTACK_API_URL"]:
+             if not new_config["CHIRPSTACK_API_URL"].startswith("http"):
+                  return jsonify({"error": "L'URL doit commencer par http:// ou https://"}), 400
+                  
+        if "GITHUB_REPO" in new_config and new_config["GITHUB_REPO"]:
+             if "/" not in new_config["GITHUB_REPO"]:
+                  return jsonify({"error": "Le dépôt GitHub doit être au format 'User/Repo'"}), 400
+
         with open(CONFIG_FILE, "w", encoding="utf-8") as f:
             json.dump(new_config, f, indent=2)
         
         # Update runtime globals
-        global CHIRPSTACK_API_URL, CHIRPSTACK_API_TOKEN
+        global CHIRPSTACK_API_URL, CHIRPSTACK_API_TOKEN, GITHUB_REPO, GITHUB_BRANCH, GITHUB_PAT
         CHIRPSTACK_API_URL = new_config.get("CHIRPSTACK_API_URL", CHIRPSTACK_API_URL)
         CHIRPSTACK_API_TOKEN = new_config.get("CHIRPSTACK_API_TOKEN", CHIRPSTACK_API_TOKEN)
+        GITHUB_REPO = new_config.get("GITHUB_REPO", GITHUB_REPO)
+        GITHUB_BRANCH = new_config.get("GITHUB_BRANCH", GITHUB_BRANCH)
+        GITHUB_PAT = new_config.get("GITHUB_PAT", GITHUB_PAT)
         
         return jsonify({"status": "success", "message": "Configuration updated"})
     except Exception as e:

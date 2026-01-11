@@ -422,9 +422,23 @@
                 <input type="text" id="conf-github-branch" class="input-dark w-100" placeholder="main">
               </div>
 
-              <div class="d-flex justify-content-end mt-4">
-                <button type="submit" class="btn-primary-glow">
-                  <i class="bi bi-save"></i> Enregistrer les modifications
+              <div class="mb-3">
+                <label class="form-label">Token GitHub (PAT)</label>
+                <div class="input-group">
+                  <input type="password" class="form-control" id="conf-github-token" placeholder="ghp_...">
+                  <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('conf-github-token')">
+                    <i class="bi bi-eye"></i>
+                  </button>
+                </div>
+                <div class="form-text">Nécessaire pour les sauvegardes automatiques/manuelles.</div>
+              </div>
+
+              <div class="d-flex gap-2 mt-4">
+                <button type="submit" class="btn btn-primary" onclick="saveConfig(); return false;">
+                  <i class="bi bi-save"></i> Enregistrer
+                </button>
+                <button type="button" class="btn btn-outline-warning" onclick="triggerBackup()">
+                  <i class="bi bi-cloud-upload"></i> Sauvegarder Maintenant
                 </button>
               </div>
             </form>
