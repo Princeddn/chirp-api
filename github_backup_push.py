@@ -4,43 +4,57 @@ from datetime import datetime
 
 def push_to_github(repo_name, branch, token, git_email="bot@chirp-api.local", git_name="ChirpApi Bot"):
     if not token or not repo_name:
-        print("❌ push_to_github: Token or Repo not provided override.")
-        return
+        raise ValueError("Token or Repo not provided")
 
     # Assuming repo_name is "User/Repo"
-    repo_url = f"https://{token}@github.com/{repo_name}.git"
+    # repo_url = f"https://{token}@github.com/{repo_name}.git"
+    # Mask token in print, but use in command
+    # safe_url = f"https://github.com/{repo_name}.git"
+    
+    # We pass the token via header or URL. URL is easiest but risky in logs?
+    # Better: Configure git credential helper store? No, too complex.
+    # Use URL with token but DO NOT PRINT IT.
+    
+    auth_repo_url = f"https://oauth2:{token}@github.com/{repo_name}.git"
 
     try:
-        # Configuration Git
-        subprocess.run(["git", "config", "--global", "user.email", git_email], check=True)
-        subprocess.run(["git", "config", "--global", "user.name", git_name], check=True)
+        # Helper to run git
+        def run_git(args):
+            # Avoid printing secret URL in logs if exception occurs
+            cmd_str = " ".join(args)
+            # print(f"DEBUG: Running {cmd_str}") 
+            res = subprocess.run(args, capture_output=True, text=True)
+            if res.returncode != 0:
+                # Mask token in error message
+                err_msg = res.stderr.replace(token, "***")
+                raise Exception(f"Git command failed: {' '.join(args[:2])}... Error: {err_msg}")
+            return res.stdout
+
+        # Configuration Git (Local instead of global to avoid permission issues)
+        run_git(["git", "config", "user.email", git_email])
+        run_git(["git", "config", "user.name", git_name])
 
         # Vérifier les modifications
-        changed = subprocess.run(["git", "diff", "--quiet", "database.json"]).returncode
+        # git diff return 1 if changed, 0 if not.
+        diff_res = subprocess.run(["git", "diff", "--quiet", "database.json"])
+        changed = (diff_res.returncode == 1)
 
-        if changed == 1:
+        if changed:
             # Création du commit
-            # On vérifie d'abord si on est sur la bonne branche ou si on doit la créer
-            # Pour simplifier dans ce contexte CI/CD local:
-            # On ajoute juste le fichier et on commit sur la branche courante si elle match, 
-            # MAIS attention le script original faisait un checkout -B branch.
-            # Cela risque d écraser le contexte local si on n'est pas prudent.
-            # On va supposer que l'user veut backuper database.json sur une branche orpheline ou spécifique 'data-backup'.
-            
-            subprocess.run(["git", "checkout", "-B", branch], check=True)
-            subprocess.run(["git", "add", "database.json"], check=True)
+            run_git(["git", "checkout", "-B", branch])
+            run_git(["git", "add", "database.json"])
             commit_msg = f"Backup auto {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
-            subprocess.run(["git", "commit", "-m", commit_msg], check=True)
+            run_git(["git", "commit", "-m", commit_msg])
 
-            # Push forcé (nécessaire pour les branches de backup)
-            subprocess.run(["git", "push", "--force", repo_url, f"{branch}:{branch}"], check=True)
+            # Push forcé
+            run_git(["git", "push", "--force", auth_repo_url, f"{branch}:{branch}"])
             print("✅ Sauvegarde GitHub OK")
-            
-            # Revenir à la branche principale ? Difficile à savoir sans contexte. 
-            # On laisse comme ça pour l'instant car c'était la logique voulue.
+            return "Backup Successful"
         else:
             print("⚠️ Aucun changement détecté")
-    except subprocess.CalledProcessError as e:
-        print(f"❌ Erreur Git: {e}")
+            return "No changes detected"
+            
     except Exception as e:
-        print(f"❌ Erreur inattendue: {e}")
+        print(f"❌ Erreur Git: {e}")
+        # Re-raise to be caught by app.py
+        raise e

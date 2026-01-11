@@ -174,10 +174,11 @@ def trigger_backup():
         save_data([]) 
         
         print("🚀 Triggering GitHub Backup...")
-        push_to_github(GITHUB_REPO, GITHUB_BRANCH, GITHUB_PAT)
-        return jsonify({"status": "success", "message": "Backup started/completed"}), 200
+        msg = push_to_github(GITHUB_REPO, GITHUB_BRANCH, GITHUB_PAT)
+        return jsonify({"status": "success", "message": str(msg)}), 200
     except Exception as e:
         print(f"❌ Backup failed: {e}")
+        return jsonify({"error": str(e)}), 500
         return jsonify({"error": str(e)}), 500
 
 @app.route('/api/config', methods=['GET'])
