@@ -179,7 +179,7 @@ def trigger_backup():
     except Exception as e:
         print(f"❌ Backup failed: {e}")
         return jsonify({"error": str(e)}), 500
-        return jsonify({"error": str(e)}), 500
+
 
 @app.route('/api/config', methods=['GET'])
 def get_config():
