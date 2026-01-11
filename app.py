@@ -25,7 +25,7 @@ CHIRPSTACK_API_URL = config.get("CHIRPSTACK_API_URL", os.getenv("CHIRPSTACK_API_
 CHIRPSTACK_API_TOKEN = config.get("CHIRPSTACK_API_TOKEN", os.getenv("CHIRPSTACK_API_TOKEN", "your_token_here"))
 GITHUB_REPO = config.get("GITHUB_REPO", os.getenv("GITHUB_REPO", "Princeddn/chirp-api"))
 GITHUB_BRANCH = config.get("GITHUB_BRANCH", os.getenv("GITHUB_BRANCH", "data-backup"))
-GITHUB_PAT = config.get("GITHUB_PAT", os.getenv("GITHUB_PAT", ""))
+GITHUB_PAT = config.get("GITHUB_PAT", config.get("TOKEN_GITHUB", os.getenv("GITHUB_PAT", "")))
 
 
 def restore_database_from_github(force=False):

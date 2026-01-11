@@ -327,7 +327,7 @@ function renderTable(page) {
     tr.innerHTML = `
         <td>${d.received_at}</td>
         <td>${d.device_name}</td>
-        <td>${d.decoded.Product_type || '-'}</td>
+        <td>${d.decoded.Fabricant || d.decoded.product_type || d.decoded.Product_type || '-'}</td>
         <td><pre style="margin:0; font-size:0.8em">${d.raw_payload || ''}</pre></td>
         <td><pre style="margin:0; font-size:0.8em; color:var(--text-muted)">${JSON.stringify(d.decoded, null, 2)}</pre></td>
       `;

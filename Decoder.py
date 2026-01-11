@@ -19330,6 +19330,21 @@ class UnifiedDecoder:
                 if res and res.get('parsed'):
                     if len(res['parsed']) > 0:
                         res['parsed']['_driver'] = drv.name
+                        
+                        # Inject Manufacturer (Fabricant)
+                        if manuf:
+                            res['parsed']['Fabricant'] = manuf.capitalize()
+                        elif 'nexelec' in drv.name.lower():
+                            res['parsed']['Fabricant'] = 'Nexelec'
+                        elif 'watteco' in drv.name.lower():
+                            res['parsed']['Fabricant'] = 'Watteco'
+                        elif 'adeunis' in drv.name.lower():
+                            res['parsed']['Fabricant'] = 'Adeunis'
+                        elif 'dragino' in drv.name.lower():
+                            res['parsed']['Fabricant'] = 'Dragino'
+                        elif 'milesight' in drv.name.lower():
+                            res['parsed']['Fabricant'] = 'Milesight'
+                            
                         return res['parsed']
             except Exception: pass
 
@@ -19340,7 +19355,9 @@ class UnifiedDecoder:
                  if 'nexelec' in d.name.lower() or 'atmo' in d.name.lower():
                       try:
                           res = d.parse({"payload": raw_payload}, None)
-                          if res and res.get('parsed'): return res['parsed']
+                          if res and res.get('parsed'): 
+                              res['parsed']['Fabricant'] = 'Nexelec'
+                              return res['parsed']
                       except: pass
         
         return {"error": "No driver found", "raw": raw_payload, "info": f"Manuf: {manuf}"}
