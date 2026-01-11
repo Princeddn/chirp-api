@@ -3,7 +3,7 @@ from datetime import datetime
 import json, os, csv, uuid, time
 from github_backup_push import push_to_github
 import requests
-from Decoder import jeedom_decoder
+from Decoder import unified_decoder
 from pytz import timezone
 
 app = Flask(__name__, static_folder='assets')
