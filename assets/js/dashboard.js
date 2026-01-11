@@ -63,9 +63,37 @@ async function fetchData() {
     renderTable(1);
     populateSensorSelect();
 
+    // Check for new packets to log in Console Live
+    checkForNewLogs();
+
   } catch (error) {
     console.error("Erreur:", error);
     addConsoleLog('system', 'Erreur chargement base de données.');
+  }
+}
+
+// --- Live Logging Logic ---
+let lastLogTimestamp = 0; // Epoch ms
+
+function checkForNewLogs() {
+  const sortedByTime = [...allData].sort((a, b) => a.timestamp_obj - b.timestamp_obj);
+  if (sortedByTime.length === 0) return;
+
+  // First run (or reload): don't flood, just set timestamp to latest
+  if (lastLogTimestamp === 0) {
+    lastLogTimestamp = sortedByTime[sortedByTime.length - 1].timestamp_obj.getTime();
+    return;
+  }
+
+  const newPackets = sortedByTime.filter(d => d.timestamp_obj.getTime() > lastLogTimestamp);
+
+  newPackets.forEach(p => {
+    const decodedStr = JSON.stringify(p.decoded).substring(0, 50) + (JSON.stringify(p.decoded).length > 50 ? '...' : '');
+    addConsoleLog('rx', `[RX] ${p.device_name} | Raw: ${p.raw_payload} | Decoded: ${decodedStr}`);
+  });
+
+  if (newPackets.length > 0) {
+    lastLogTimestamp = newPackets[newPackets.length - 1].timestamp_obj.getTime();
   }
 }
 
