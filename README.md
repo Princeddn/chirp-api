@@ -43,6 +43,14 @@ Plus besoin de modifier les fichiers de code pour connecter votre instance Chirp
 
 Les paramètres sont sauvegardés localement dans un fichier `config.json`.
 
+## 📚 Documentation (B-MAD)
+
+Le projet suit la méthodologie B-MAD. La documentation complète est disponible dans le dossier `docs/` :
+
+*   [💡 Brainstorming & Contexte](docs/brainstorming-session-results.md) : Pourquoi ce projet existe.
+*   [📋 Spécifications (PRD)](docs/prd.md) : Fonctionnalités et exigences.
+*   [🏗️ Architecture Technique](docs/architecture.md) : Comment ça marche sous le capot.
+
 ## 📂 Structure du Projet
 
 *   `app.py` : Serveur Backend Flask.

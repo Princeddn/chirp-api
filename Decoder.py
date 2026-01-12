@@ -74,13 +74,13 @@ logging.getLogger().handlers = []
 
 #
 
-import logging
 
-import struct
+
+
 
 import time
 
-import json
+
 
 import threading
 
@@ -266,13 +266,13 @@ globals.COMPATIBILITY.append(adeunis_ARF818xxR)
 
 #
 
-import logging
 
-import struct
+
+
 
 import time
 
-import json
+
 
 import threading
 
@@ -510,13 +510,13 @@ globals.COMPATIBILITY.append(adeunis_ARF8230ABA)
 
 #
 
-import logging
 
-import struct
+
+
 
 import time
 
-import json
+
 
 import threading
 
@@ -676,13 +676,13 @@ globals.COMPATIBILITY.append(adeunis_motion)
 
 #
 
-import logging
 
-import struct
+
+
 
 import time
 
-import json
+
 
 import threading
 
@@ -842,13 +842,13 @@ globals.COMPATIBILITY.append(adeunis_temperature_humidite)
 
 #
 
-import logging
 
-import struct
+
+
 
 import time
 
-import json
+
 
 import threading
 
@@ -980,13 +980,13 @@ globals.COMPATIBILITY.append(avidsen)
 
 #
 
-import logging
 
-import struct
+
+
 
 import time
 
-import json
+
 
 import threading
 
@@ -1212,13 +1212,13 @@ globals.COMPATIBILITY.append(bmeters_iwmlr3)
 
 #
 
-import logging
 
-import struct
+
+
 
 import time
 
-import json
+
 
 import threading
 
@@ -1630,13 +1630,13 @@ globals.COMPATIBILITY.append(cartelectronic_tic)
 
 #
 
-import logging
 
-import struct
+
+
 
 import time
 
-import json
+
 
 import threading
 
@@ -2014,13 +2014,13 @@ globals.COMPATIBILITY.append(citylone_sl22)
 
 #
 
-import logging
 
-import struct
+
+
 
 import time
 
-import json
+
 
 import threading
 
@@ -2394,13 +2394,13 @@ globals.COMPATIBILITY.append(citylone_sl32)
 
 #
 
-import logging
 
-import struct
+
+
 
 import time
 
-import json
+
 
 import threading
 
@@ -2786,13 +2786,13 @@ globals.COMPATIBILITY.append(citylone_smartlighting)
 
 #
 
-import logging
 
-import struct
+
+
 
 import time
 
-import json
+
 
 import threading
 
@@ -3674,13 +3674,13 @@ globals.COMPATIBILITY.append(diehl_HRLcG3)
 
 #
 
-import logging
 
-import struct
+
+
 
 import time
 
-import json
+
 
 import threading
 
@@ -3796,13 +3796,13 @@ globals.COMPATIBILITY.append(dragino_D20LBLS)
 
 #
 
-import logging
 
-import struct
+
+
 
 import time
 
-import json
+
 
 import threading
 
@@ -3928,13 +3928,13 @@ globals.COMPATIBILITY.append(dragino_D22LBLS)
 
 #
 
-import logging
 
-import struct
+
+
 
 import time
 
-import json
+
 
 import threading
 
@@ -4070,13 +4070,13 @@ globals.COMPATIBILITY.append(dragino_D23LBLS)
 
 #
 
-import logging
 
-import struct
+
+
 
 import time
 
-import json
+
 
 import threading
 
@@ -4170,13 +4170,13 @@ globals.COMPATIBILITY.append(dragino_LAQ4)
 
 #
 
-import logging
 
-import struct
+
+
 
 import time
 
-import json
+
 
 import threading
 
@@ -4320,13 +4320,13 @@ globals.COMPATIBILITY.append(dragino_LDS02)
 
 #
 
-import logging
 
-import struct
+
+
 
 import time
 
-import json
+
 
 import threading
 
@@ -4428,13 +4428,13 @@ globals.COMPATIBILITY.append(dragino_LGT92)
 
 #
 
-import logging
 
-import struct
+
+
 
 import time
 
-import json
+
 
 import threading
 
@@ -4592,13 +4592,13 @@ globals.COMPATIBILITY.append(dragino_LHT65)
 
 #
 
-import logging
 
-import struct
+
+
 
 import time
 
-import json
+
 
 import threading
 
@@ -4724,13 +4724,13 @@ globals.COMPATIBILITY.append(dragino_LSN50_V2_mod4)
 
 #
 
-import logging
 
-import struct
+
+
 
 import time
 
-import json
+
 
 import threading
 
@@ -4812,13 +4812,13 @@ globals.COMPATIBILITY.append(dragino_LSN50_V2_mod6)
 
 #
 
-import logging
 
-import struct
+
+
 
 import time
 
-import json
+
 
 import threading
 
@@ -5046,13 +5046,13 @@ globals.COMPATIBILITY.append(dragino_LT_22222)
 
 #
 
-import logging
 
-import struct
+
+
 
 import time
 
-import json
+
 
 import threading
 
@@ -5170,13 +5170,13 @@ globals.COMPATIBILITY.append(dragino_LWL02)
 
 #
 
-import logging
 
-import struct
+
+
 
 import time
 
-import json
+
 
 import threading
 
@@ -5264,13 +5264,13 @@ globals.COMPATIBILITY.append(dragino_RS485_BL_TUF2000)
 
 #
 
-import logging
 
-import struct
+
+
 
 import time
 
-import json
+
 
 import threading
 
@@ -5372,13 +5372,13 @@ globals.COMPATIBILITY.append(dragino_RS485_LN_EM540)
 
 #
 
-import logging
 
-import struct
+
+
 
 import time
 
-import json
+
 
 import threading
 
@@ -5484,13 +5484,13 @@ globals.COMPATIBILITY.append(dragino_RS485_LN_NILAN)
 
 #
 
-import logging
 
-import struct
+
+
 
 import time
 
-import json
+
 
 import threading
 
@@ -5594,13 +5594,13 @@ globals.COMPATIBILITY.append(dragino_RS485_LN_OTMetricPolier)
 
 #
 
-import logging
 
-import struct
+
+
 
 import time
 
-import json
+
 
 import threading
 
@@ -5718,13 +5718,13 @@ globals.COMPATIBILITY.append(dragino_RS485_LN_PZEM_004T)
 
 #
 
-import logging
 
-import struct
+
+
 
 import time
 
-import json
+
 
 import threading
 
@@ -5834,13 +5834,13 @@ globals.COMPATIBILITY.append(dragino_SW3L)
 
 #
 
-import logging
 
-import struct
+
+
 
 import time
 
-import json
+
 
 import threading
 
@@ -6276,13 +6276,13 @@ globals.COMPATIBILITY.append(dry_contacts)
 
 #
 
-import logging
 
-import struct
+
+
 
 import time
 
-import json
+
 
 import threading
 
@@ -6500,13 +6500,13 @@ globals.COMPATIBILITY.append(eastron_sdm630)
 
 #
 
-import logging
 
-import struct
+
+
 
 import time
 
-import json
+
 
 import threading
 
@@ -6822,13 +6822,13 @@ globals.COMPATIBILITY.append(elsys)
 
 #
 
-import logging
 
-import struct
+
+
 
 import time
 
-import json
+
 
 import threading
 
@@ -7156,13 +7156,13 @@ globals.COMPATIBILITY.append(enerbee_evav)
 
 #
 
-import logging
 
-import struct
+
+
 
 import time
 
-import json
+
 
 import threading
 
@@ -7274,13 +7274,13 @@ globals.COMPATIBILITY.append(enginko_MCFLW13IO)
 
 #
 
-import logging
 
-import struct
+
+
 
 import time
 
-import json
+
 
 import threading
 
@@ -7436,13 +7436,13 @@ globals.COMPATIBILITY.append(ewattchambiance)
 
 #
 
-import logging
 
-import struct
+
+
 
 import time
 
-import json
+
 
 import threading
 
@@ -7608,13 +7608,13 @@ globals.COMPATIBILITY.append(ewattchsquid)
 
 #
 
-import logging
 
-import struct
+
+
 
 import time
 
-import json
+
 
 import threading
 
@@ -7886,13 +7886,13 @@ globals.COMPATIBILITY.append(ewattchsquidprorogowski)
 
 #
 
-import logging
 
-import struct
+
+
 
 import time
 
-import json
+
 
 import threading
 
@@ -8060,13 +8060,13 @@ globals.COMPATIBILITY.append(ewattchtyness)
 
 #
 
-import logging
 
-import struct
+
+
 
 import time
 
-import json
+
 
 import threading
 
@@ -8214,13 +8214,13 @@ globals.COMPATIBILITY.append(ewattch_ambianceCO2)
 
 #
 
-import logging
 
-import struct
+
+
 
 import time
 
-import json
+
 
 import threading
 
@@ -8368,13 +8368,13 @@ globals.COMPATIBILITY.append(globalsat_S11x)
 
 #
 
-import logging
 
-import struct
+
+
 
 import time
 
-import json
+
 
 import threading
 
@@ -8454,13 +8454,13 @@ globals.COMPATIBILITY.append(loragate)
 
 #
 
-import logging
 
-import struct
+
+
 
 import time
 
-import json
+
 
 import threading
 
@@ -8574,13 +8574,13 @@ globals.COMPATIBILITY.append(mclimate_AQI)
 
 #
 
-import logging
 
-import struct
+
+
 
 import time
 
-import json
+
 
 import threading
 
@@ -8666,13 +8666,13 @@ globals.COMPATIBILITY.append(mclimate_CO2)
 
 #
 
-import logging
 
-import struct
+
+
 
 import time
 
-import json
+
 
 import threading
 
@@ -9118,13 +9118,13 @@ globals.COMPATIBILITY.append(mclimate_fanCoilThermostat)
 
 #
 
-import logging
 
-import struct
+
+
 
 import time
 
-import json
+
 
 import threading
 
@@ -9410,13 +9410,13 @@ globals.COMPATIBILITY.append(mclimate_Vicki)
 
 #
 
-import logging
 
-import struct
+
+
 
 import time
 
-import json
+
 
 import threading
 
@@ -9656,13 +9656,13 @@ globals.COMPATIBILITY.append(mclimate_wirelessThermostat)
 
 #
 
-import logging
 
-import struct
+
+
 
 import time
 
-import json
+
 
 import threading
 
@@ -9796,13 +9796,13 @@ globals.COMPATIBILITY.append(micropelt_mlr003)
 
 #
 
-import logging
 
-import struct
+
+
 
 import time
 
-import json
+
 
 import threading
 
@@ -9962,13 +9962,13 @@ globals.COMPATIBILITY.append(milesight_AM100)
 
 #
 
-import logging
 
-import struct
+
+
 
 import time
 
-import json
+
 
 import threading
 
@@ -10108,13 +10108,13 @@ globals.COMPATIBILITY.append(milesight_DS3604)
 
 #
 
-import logging
 
-import struct
+
+
 
 import time
 
-import json
+
 
 import threading
 
@@ -10264,13 +10264,13 @@ globals.COMPATIBILITY.append(milesight_EM300)
 
 #
 
-import logging
 
-import struct
+
+
 
 import time
 
-import json
+
 
 import threading
 
@@ -10404,13 +10404,13 @@ globals.COMPATIBILITY.append(milesight_EM320TH)
 
 #
 
-import logging
 
-import struct
+
+
 
 import time
 
-import json
+
 
 import threading
 
@@ -10536,13 +10536,13 @@ globals.COMPATIBILITY.append(milesight_EM500PT100)
 
 #
 
-import logging
 
-import struct
+
+
 
 import time
 
-import json
+
 
 import threading
 
@@ -10804,13 +10804,13 @@ globals.COMPATIBILITY.append(milesight_UC501)
 
 #
 
-import logging
 
-import struct
+
+
 
 import time
 
-import json
+
 
 import threading
 
@@ -11024,13 +11024,13 @@ globals.COMPATIBILITY.append(milesight_VS121)
 
 #
 
-import logging
 
-import struct
+
+
 
 import time
 
-import json
+
 
 import threading
 
@@ -11160,13 +11160,13 @@ globals.COMPATIBILITY.append(milesight_WS101)
 
 #
 
-import logging
 
-import struct
+
+
 
 import time
 
-import json
+
 
 import threading
 
@@ -11286,13 +11286,13 @@ globals.COMPATIBILITY.append(milesight_WS156)
 
 #
 
-import logging
 
-import struct
+
+
 
 import time
 
-import json
+
 
 import threading
 
@@ -11426,13 +11426,13 @@ globals.COMPATIBILITY.append(milesight_WS202)
 
 #
 
-import logging
 
-import struct
+
+
 
 import time
 
-import json
+
 
 import threading
 
@@ -11576,13 +11576,13 @@ globals.COMPATIBILITY.append(milesight_WS301)
 
 #
 
-import logging
 
-import struct
+
+
 
 import time
 
-import json
+
 
 import threading
 
@@ -11814,13 +11814,13 @@ globals.COMPATIBILITY.append(milesight_WS50x)
 
 #
 
-import logging
 
-import struct
+
+
 
 import time
 
-import json
+
 
 import threading
 
@@ -12024,13 +12024,13 @@ globals.COMPATIBILITY.append(milesight_WS51x)
 
 #
 
-import logging
 
-import struct
+
+
 
 import time
 
-import json
+
 
 import threading
 
@@ -12262,13 +12262,13 @@ globals.COMPATIBILITY.append(milesight_WS522)
 
 #
 
-import logging
 
-import struct
+
+
 
 import time
 
-import json
+
 
 import threading
 
@@ -12482,13 +12482,13 @@ globals.COMPATIBILITY.append(milesight_WS558)
 
 #
 
-import logging
 
-import struct
+
+
 
 import time
 
-import json
+
 
 import threading
 
@@ -12616,13 +12616,13 @@ globals.COMPATIBILITY.append(nanosenseE4000NG)
 
 #
 
-import logging
 
-import struct
+
+
 
 import time
 
-import json
+
 
 import threading
 
@@ -12824,13 +12824,13 @@ globals.COMPATIBILITY.append(nanosenseEP5000L)
 
 #
 
-import logging
 
-import struct
+
+
 
 import time
 
-import json
+
 
 import threading
 
@@ -12954,13 +12954,13 @@ globals.COMPATIBILITY.append(netvox)
 
 #
 
-import logging
 
-import struct
+
+
 
 import time
 
-import json
+
 
 import threading
 
@@ -13238,13 +13238,13 @@ globals.COMPATIBILITY.append(nexelec)
 
 #
 
-import logging
 
-import struct
+
+
 
 import time
 
-import json
+
 
 import threading
 
@@ -13642,13 +13642,13 @@ globals.COMPATIBILITY.append(nexelec_air)
 
 #
 
-import logging
 
-import struct
+
+
 
 import time
 
-import json
+
 
 import threading
 
@@ -14490,13 +14490,13 @@ globals.COMPATIBILITY.append(nexelec_air_2)
 
 #
 
-import logging
 
-import struct
+
+
 
 import time
 
-import json
+
 
 import threading
 
@@ -14602,13 +14602,13 @@ globals.COMPATIBILITY.append(nke)
 
 #
 
-import logging
 
-import struct
+
+
 
 import time
 
-import json
+
 
 import threading
 
@@ -14774,13 +14774,13 @@ globals.COMPATIBILITY.append(nke_batch)
 
 #
 
-import logging
 
-import struct
+
+
 
 import time
 
-import json
+
 
 import threading
 
@@ -15082,13 +15082,13 @@ globals.COMPATIBILITY.append(nke_bob)
 
 #
 
-import logging
 
-import struct
+
+
 
 import time
 
-import json
+
 
 import threading
 
@@ -15202,13 +15202,13 @@ globals.COMPATIBILITY.append(nke_filpilote)
 
 #
 
-import logging
 
-import struct
+
+
 
 import time
 
-import json
+
 
 import threading
 
@@ -15298,13 +15298,13 @@ globals.COMPATIBILITY.append(nke_flasho)
 
 #
 
-import logging
 
-import struct
+
+
 
 import time
 
-import json
+
 
 import threading
 
@@ -15478,13 +15478,13 @@ globals.COMPATIBILITY.append(nke_ino)
 
 #
 
-import logging
 
-import struct
+
+
 
 import time
 
-import json
+
 
 import threading
 
@@ -15574,9 +15574,9 @@ globals.COMPATIBILITY.append(nke_intenso)
 
 #
 
-import logging
 
-import struct
+
+
 
 import subprocess
 
@@ -15584,7 +15584,7 @@ import time
 
 import os
 
-import json
+
 
 import threading
 
@@ -15722,13 +15722,13 @@ globals.COMPATIBILITY.append(nke_tic)
 
 #
 
-import logging
 
-import struct
+
+
 
 import time
 
-import json
+
 
 import threading
 
@@ -15828,13 +15828,13 @@ globals.COMPATIBILITY.append(nke_torano)
 
 #
 
-import logging
 
-import struct
+
+
 
 import time
 
-import json
+
 
 import threading
 
@@ -16018,13 +16018,13 @@ globals.COMPATIBILITY.append(nke_triphaso)
 
 #
 
-import logging
 
-import struct
+
+
 
 import time
 
-import json
+
 
 import threading
 
@@ -16114,13 +16114,13 @@ globals.COMPATIBILITY.append(occion)
 
 #
 
-import logging
 
-import struct
+
+
 
 import time
 
-import json
+
 
 import threading
 
@@ -16278,13 +16278,13 @@ globals.COMPATIBILITY.append(PE6v2)
 
 #
 
-import logging
 
-import struct
+
+
 
 import time
 
-import json
+
 
 import threading
 
@@ -16520,13 +16520,13 @@ globals.COMPATIBILITY.append(quandify_cubicMeter)
 
 #
 
-import logging
 
-import struct
+
+
 
 import time
 
-import json
+
 
 import threading
 
@@ -16772,13 +16772,13 @@ globals.COMPATIBILITY.append(rak2171)
 
 #
 
-import logging
 
-import struct
+
+
 
 import time
 
-import json
+
 
 import threading
 
@@ -16930,13 +16930,13 @@ globals.COMPATIBILITY.append(rak7205)
 
 #
 
-import logging
 
-import struct
+
+
 
 import time
 
-import json
+
 
 import threading
 
@@ -17054,13 +17054,13 @@ globals.COMPATIBILITY.append(rakc15003)
 
 #
 
-import logging
 
-import struct
+
+
 
 import time
 
-import json
+
 
 import threading
 
@@ -17146,13 +17146,13 @@ globals.COMPATIBILITY.append(senlabM)
 
 #
 
-import logging
 
-import struct
+
+
 
 import time
 
-import json
+
 
 import threading
 
@@ -17620,13 +17620,13 @@ globals.COMPATIBILITY.append(SHE_MIO_LORA_V2)
 
 #
 
-import logging
 
-import struct
+
+
 
 import time
 
-import json
+
 
 import threading
 
@@ -17736,13 +17736,13 @@ globals.COMPATIBILITY.append(uRadMonitor_A3)
 
 #
 
-import logging
 
-import struct
+
+
 
 import time
 
-import json
+
 
 import threading
 
@@ -17970,13 +17970,13 @@ globals.COMPATIBILITY.append(vega)
 
 #
 
-import logging
 
-import struct
+
+
 
 import time
 
-import json
+
 
 import threading
 
@@ -18537,11 +18537,11 @@ class batchnke_constants:
 
 from collections import namedtuple
 
-import struct
+
 
 from datetime import datetime
 
-import json
+
 
 import ctypes
 
@@ -19324,6 +19324,26 @@ class UnifiedDecoder:
         
         # Try finding a driver
         for drv in potential_drivers:
+            # OPTIMIZATION: Enforce Manufacturer Constraint
+            # If we know the manufacturer, do not let other known manufacturers' drivers attempt to parse.
+            if manuf:
+                drv_name_lower = drv.name.lower()
+                manuf_lower = manuf.lower()
+                
+                # List of distinct brands to enforce separation
+                known_brands = ["milesight", "nexelec", "adeunis", "dragino", "watteco", "mclimate", "netvox", "eastron", "thermokon"]
+                
+                is_conflicting_brand = False
+                for brand in known_brands:
+                    # If driver implicitly belongs to 'brand' AND it's not the identified 'manuf'
+                    if brand in drv_name_lower and brand != manuf_lower:
+                        # Allow some flexibility if needed, but usually this is a hard conflict
+                        is_conflicting_brand = True
+                        break
+                
+                if is_conflicting_brand:
+                    continue
+
             try:
                 d_in = data_wrapper.copy()
                 res = drv.parse(d_in, None)
